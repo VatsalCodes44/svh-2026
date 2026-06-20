@@ -1,6 +1,4 @@
 import bcLogo from '../assets/Blockchain Club Logo (Circle).png';
-import vitLogo from '../assets/logovitbhopal.jpeg';
-import { Code } from 'lucide-react';
 
 export default function Organizers() {
   return (
@@ -17,8 +15,7 @@ export default function Organizers() {
           
           {/* VIT Bhopal Student Council - analogous to AICTE / MoEs */}
           <div className="flex items-center gap-4 group">
-            <img src={vitLogo} alt="VIT Bhopal" className="h-20 w-auto object-contain rounded-md" />
-            <div className="flex flex-col text-left">
+            <div className="flex flex-col text-center md:text-left">
               <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Organizing Institute</span>
               <span className="text-lg font-black font-inter text-[#0f2942] uppercase">VIT Bhopal University</span>
             </div>
@@ -28,23 +25,12 @@ export default function Organizers() {
           <div className="flex items-center gap-4 group">
              <img src={bcLogo} alt="Blockchain Club" className="h-24 w-24 object-cover rounded-full shadow-sm" />
              <div className="flex flex-col text-left">
-                <span className="text-xs text-sih-orange font-bold uppercase tracking-wider mb-0.5">Primary Club</span>
-                <div className="flex items-baseline gap-1">
-                   <span className="text-2xl font-black font-inter text-[#0f2942] uppercase tracking-tighter">BLOCKCHAIN</span>
-                   <span className="text-2xl font-black font-inter text-[#0ea5e9] uppercase tracking-tighter">CLUB</span>
-                </div>
-             </div>
-          </div>
-
-          {/* Tech/Support */}
-          <div className="flex items-center gap-4 group">
-            <div className="p-4 bg-[#fce4c0] rounded-full">
-              <Code className="w-12 h-12 text-[#0f2942]" />
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Technology Partner</span>
-              <span className="text-lg font-black font-inter text-[#0f2942] uppercase">Dev Department</span>
-            </div>
+                 <span className="text-xs text-sih-orange font-bold uppercase tracking-wider mb-0.5">Primary Club</span>
+                 <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black font-inter text-[#0f2942] uppercase tracking-tighter">BLOCKCHAIN</span>
+                    <span className="text-2xl font-black font-inter text-[#0ea5e9] uppercase tracking-tighter">CLUB</span>
+                 </div>
+              </div>
           </div>
 
         </div>

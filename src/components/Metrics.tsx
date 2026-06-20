@@ -39,7 +39,7 @@ export default function Metrics() {
               {item.icon}
             </div>
             <h3 className="text-xl font-bold font-inter text-[#0f2942] mb-4 tracking-tight px-2">{item.title}</h3>
-            <p className="text-sm text-gray-800 font-roboto leading-relaxed mb-6 px-1 font-medium">{item.description}</p>
+            <p className="text-sm text-gray-800 font-roboto leading-relaxed mb-6 px-1 font-medium text-justify">{item.description}</p>
             <div className="w-2/3 h-1 bg-[#ea580c] mt-auto mx-auto rounded-full"></div>
           </div>
         ))}

@@ -1,6 +1,8 @@
-import { Lightbulb, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+
+import bcLogo from '../assets/Blockchain Club Logo (Circle).png';
 
 export default function Header() {
   const { hash, pathname } = useLocation();
@@ -31,7 +33,7 @@ export default function Header() {
         {/* Main Event Branding */}
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center">
-            <Lightbulb className="w-12 h-12 text-sih-orange" />
+            <img src={bcLogo} alt="Blockchain Club Logo" className="w-12 h-12 rounded-full object-cover shadow-sm border border-gray-200" />
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-black text-[#0f2942] tracking-tight leading-none uppercase font-inter">SMART VIT BHOPAL</span>
