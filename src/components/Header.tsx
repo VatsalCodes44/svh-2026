@@ -1,8 +1,8 @@
 import { ChevronDown } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { useEffect } from 'react';
 
-import bcLogo from '../assets/Blockchain Club Logo (Circle).png';
+import svhLogo from '../assets/svh_logo.png';
 
 export default function Header() {
   const { hash, pathname } = useLocation();
@@ -14,7 +14,7 @@ export default function Header() {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     } else if (pathname !== '/') {
-        window.scrollTo(0, 0);
+      window.scrollTo(0, 0);
     }
   }, [hash, pathname]);
 
@@ -33,7 +33,7 @@ export default function Header() {
         {/* Main Event Branding */}
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center">
-            <img src={bcLogo} alt="Blockchain Club Logo" className="w-12 h-12 rounded-full object-cover shadow-sm border border-gray-200" />
+            <img id="svhLogoPin" src={svhLogo} alt="SVH Logo" className="w-16 h-16 object-contain shadow-sm border border-gray-200" />
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-black text-[#0f2942] tracking-tight leading-none uppercase font-inter">SMART VIT BHOPAL</span>
@@ -48,8 +48,8 @@ export default function Header() {
             const isHashLink = link.path.includes('#');
             if (isHashLink) {
               return (
-                <a 
-                  key={idx} 
+                <a
+                  key={idx}
                   href={link.path}
                   className="flex items-center gap-1 text-[13px] font-bold font-inter tracking-wide transition-colors text-[#0f2942]/80 hover:text-sih-orange"
                 >
@@ -59,10 +59,10 @@ export default function Header() {
               );
             }
             return (
-              <NavLink 
-                key={idx} 
-                to={link.path} 
-                className={({isActive}) => `flex items-center gap-1 text-[13px] font-bold font-inter tracking-wide transition-colors ${isActive ? 'text-[#0f2942]' : 'text-[#0f2942]/80 hover:text-sih-orange'}`}
+              <NavLink
+                key={idx}
+                to={link.path}
+                className={({ isActive }) => `flex items-center gap-1 text-[13px] font-bold font-inter tracking-wide transition-colors ${isActive ? 'text-[#0f2942]' : 'text-[#0f2942]/80 hover:text-sih-orange'}`}
               >
                 {link.label}
                 {link.hasDropdown && <ChevronDown className="w-4 h-4 ml-0.5 text-[#0f2942]" />}
@@ -70,6 +70,14 @@ export default function Header() {
             );
           })}
         </nav>
+
+        {/* Right side: SVH logo and Register button */}
+        <div className="flex items-center gap-3 ml-auto">
+          <img src={svhLogo} alt="SVH Logo" className="w-12 h-12 object-contain shadow-sm border border-gray-200" />
+          <Link to="/" className="text-sm font-black px-6 py-2.5 bg-[#ea580c] text-white rounded-md hover:bg-[#c2410c] transition-colors uppercase tracking-wider shadow-sm">
+            Register Now
+          </Link>
+        </div>
       </div>
     </header>
   );

@@ -19,7 +19,7 @@ export default function Hero() {
               Blockchain Club, VIT Bhopal
             </span>
             <h1 className="text-5xl md:text-7xl font-black text-sih-navy tracking-tight leading-none mb-4 font-inter uppercase">
-              Smart VIT <br className="hidden md:inline"/>Hackathon 2026
+              Smart VIT <br className="hidden md:inline" />Hackathon 2026
             </h1>
             <h2 className="text-xl md:text-2xl font-bold text-gray-600 mb-8 font-inter leading-relaxed text-justify">
               An Internal Hackathon Modelled on Smart India Hackathon (SIH)

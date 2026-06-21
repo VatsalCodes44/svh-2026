@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import TopBar from './components/TopBar';
+
 import Header from './components/Header';
 import Footer from './components/Footer';
+import GlobalCanvasBackground from './components/GlobalCanvasBackground';
+
+
 
 // Pages
 import Home from './pages/Home';
@@ -14,14 +17,13 @@ function App() {
   return (
     <Router>
       <main className="min-h-screen bg-[#fce4c0] selection:bg-sih-orange/30 selection:text-sih-navy font-roboto text-sih-gray-dark flex flex-col">
-        {/* TopBar wraps logos and scroll logic overrides it */}
-        <TopBar />
-        
+        {/* Global Canvas Background */}
+        <GlobalCanvasBackground />
         {/* Sticky Header Nav */}
         <div className="sticky top-0 z-[100] w-full shadow-md">
           <Header />
         </div>
-        
+
         <div className="flex-1 bg-white">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -31,7 +33,7 @@ function App() {
             <Route path="/contact" element={<ContactUs />} />
           </Routes>
         </div>
-        
+
         <Footer />
       </main>
     </Router>

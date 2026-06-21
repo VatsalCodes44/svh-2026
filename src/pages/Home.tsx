@@ -5,6 +5,7 @@ import Metrics from '../components/Metrics';
 import Organizers from '../components/Organizers';
 import { Megaphone, FileImage, ShieldCheck, CheckSquare, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import erasebg from '../assets/erasebg-transformed.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,41 +48,52 @@ export default function Home() {
           }
         }
       );
+
+      // Pin SVH logo during timeline scroll
+      gsap.to('#svhLogoPin', {
+        scrollTrigger: {
+          trigger: '#process-flow',
+          start: 'top top',
+          end: 'bottom top',
+          pin: true,
+          anticipatePin: 1,
+        },
+      });
     });
 
     return () => ctx.revert();
   }, []);
 
   const steps = [
-    { 
-      date: "1 – 20 July 2026", 
-      title: "Registration", 
-      desc: "Teams of 6 members must register. Minimum 1 female team member is mandatory. Registration fee is ₹75 per participant (₹450 per team). Notes: 20 days duration.", 
-      icon: <Megaphone className="w-6 h-6 text-white" /> 
+    {
+      date: "1 – 20 July 2026",
+      title: "Registration",
+      desc: "Teams of 6 members must register. Minimum 1 female team member is mandatory. Registration fee is ₹75 per participant (₹450 per team). Notes: 20 days duration.",
+      icon: <Megaphone className="w-6 h-6 text-white" />
     },
-    { 
-      date: "20 July – 5 Aug 2026", 
-      title: "Round 1: PPT Submission", 
-      desc: "Teams select and work on one of the available problem statements (up to 2). Submit a presentation explaining problem understanding, proposed solution, technical architecture, impact, and implementation roadmap. Notes: 16 days duration.", 
-      icon: <FileImage className="w-6 h-6 text-white" /> 
+    {
+      date: "20 July – 5 Aug 2026",
+      title: "Round 1: PPT Submission",
+      desc: "Teams select and work on one of the available problem statements (up to 2). Submit a presentation explaining problem understanding, proposed solution, technical architecture, impact, and implementation roadmap. Notes: 16 days duration.",
+      icon: <FileImage className="w-6 h-6 text-white" />
     },
-    { 
-      date: "5 – 10 Aug 2026", 
-      title: "Round 1: PPT Evaluation", 
-      desc: "Rigorous review of submitted PPTs by an internal evaluation panel. The panel shortlists the top 5 teams per problem statement for the Grand Finale.", 
-      icon: <ShieldCheck className="w-6 h-6 text-white" /> 
+    {
+      date: "5 – 10 Aug 2026",
+      title: "Round 1: PPT Evaluation",
+      desc: "Rigorous review of submitted PPTs by an internal evaluation panel. The panel shortlists the top 5 teams per problem statement for the Grand Finale.",
+      icon: <ShieldCheck className="w-6 h-6 text-white" />
     },
-    { 
-      date: "TBD (soon after 10 Aug)", 
-      title: "Results Announcement", 
-      desc: "The shortlist of top finalist teams advancing to the Grand Finale will be officially announced across internal boards.", 
-      icon: <CheckSquare className="w-6 h-6 text-white" /> 
+    {
+      date: "TBD (soon after 10 Aug)",
+      title: "Results Announcement",
+      desc: "The shortlist of top finalist teams advancing to the Grand Finale will be officially announced across internal boards.",
+      icon: <CheckSquare className="w-6 h-6 text-white" />
     },
-    { 
-      date: "24–25 Aug 2026 (tentative)", 
-      title: "Round 2: Grand Finale (Prototype)", 
-      desc: "Shortlisted finalist teams (up to 60 teams/6 members each) build and demonstrate a functional prototype based on their proposal. A 2-day compressed hackathon format with 12 hours of hands-on building time. Subject to institute approval for On-Duty (OD) permissions.", 
-      icon: <Award className="w-6 h-6 text-white" /> 
+    {
+      date: "24–25 Aug 2026 (tentative)",
+      title: "Round 2: Grand Finale (Prototype)",
+      desc: "Shortlisted finalist teams (up to 60 teams/6 members each) build and demonstrate a functional prototype based on their proposal. A 2-day compressed hackathon format with 12 hours of hands-on building time. Subject to institute approval for On-Duty (OD) permissions.",
+      icon: <Award className="w-6 h-6 text-white" />
     }
   ];
 
@@ -112,6 +124,11 @@ export default function Home() {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Banner Section */}
+      <section className="my-8">
+        <img src={erasebg} alt="Banner" className="w-full object-cover" />
       </section>
 
       {/* Main Split Flow & Stats Section */}
@@ -147,55 +164,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          {/* Right Column: Internal Hackathons Stats */}
-          <div className="w-full xl:w-[450px] flex flex-col pt-[5.5rem]">
-            <div className="bg-[#0f2942] rounded-2xl p-8 shadow-xl sticky top-32 overflow-hidden border-2 border-[#0ea5e9]/20 relative">
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-sih-orange blur-3xl opacity-20"></div>
-
-              <h3 className="text-white text-3xl font-black font-inter tracking-tight mb-8">Internal Hackathons</h3>
-
-              <div className="flex flex-col gap-6 mb-10">
-                {/* Stat 1 */}
-                <div className="stat-card flex items-center bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm">
-                  <div className="w-16 h-16 bg-sih-orange rounded-lg flex items-center justify-center shrink-0 shadow-lg">
-                    <span className="text-white text-3xl font-black">12</span>
-                  </div>
-                  <div className="ml-4">
-                    <span className="text-white font-bold font-inter leading-tight block">PROBLEM <br /> STATEMENTS</span>
-                  </div>
-                </div>
-
-                {/* Stat 2 */}
-                <div className="stat-card flex items-center bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm">
-                  <div className="w-16 h-16 bg-[#16a34a] rounded-lg flex items-center justify-center shrink-0 shadow-lg">
-                    <span className="text-white text-3xl font-black">6</span>
-                  </div>
-                  <div className="ml-4 flex flex-col">
-                    <span className="text-white font-bold font-inter uppercase tracking-wide">Members/Team</span>
-                    <span className="text-sih-orange text-[10px] font-black tracking-widest mt-1">MAX FINALISTS: 60 TEAMS</span>
-                  </div>
-                </div>
-
-                {/* Stat 3 */}
-                <div className="stat-card flex items-center bg-white/10 rounded-xl p-4 border border-white/20 backdrop-blur-sm">
-                  <div className="w-16 h-16 bg-[#0ea5e9] rounded-lg flex items-center justify-center shrink-0 shadow-lg">
-                    <span className="text-white text-3xl font-black">₹75</span>
-                  </div>
-                  <div className="ml-4 flex flex-col">
-                    <span className="text-white font-bold font-inter uppercase tracking-wide">Per Participant</span>
-                    <span className="text-gray-300 text-[10px] font-bold tracking-widest mt-1 uppercase">₹450 Per Team</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link to="/" className="stat-card group relative w-full flex justify-center items-center px-8 py-5 font-black text-white bg-gradient-to-r from-sih-orange to-[#ea580c] rounded-xl overflow-hidden shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_30px_rgba(249,115,22,0.6)] transition-all hover:-translate-y-1">
-                <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <span className="relative text-xl tracking-widest uppercase">REGISTER NOW</span>
-              </Link>
-            </div>
-          </div>
-
         </div>
       </section>
 
