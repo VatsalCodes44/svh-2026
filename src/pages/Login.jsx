@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 /* ═══════════════════════════════════════════════
    SHARED UTILITIES (Matching Home.jsx)
@@ -54,10 +55,13 @@ function FloatingParticles({ count = 18 }) {
 
 export default function Login() {
   const [m, setM] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('team_leader');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => { const t = setTimeout(() => setM(true), 80); return () => clearTimeout(t); }, []);
@@ -70,16 +74,62 @@ export default function Login() {
     ...extra,
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please fill in all fields.');
+    setError('');
+
+    if (!email || !password || (!isLogin && !fullName)) {
+      setError('Please fill in all required fields.');
       return;
     }
-    // Mock login for now
-    setError('');
-    alert('Login successful! Welcome to SVH 2026.');
-    navigate('/');
+
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        // Sign In
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) throw signInError;
+
+        alert('Login successful! Welcome to SVH 2026.');
+        navigate('/');
+      } else {
+        // Sign Up
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) throw signUpError;
+
+        if (authData.user) {
+          // Insert profile details
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: authData.user.id,
+                email,
+                full_name: fullName,
+                is_team_leader: role === 'team_leader'
+              }
+            ]);
+
+          if (profileError) throw profileError;
+        }
+
+        alert('Registration successful! Please login.');
+        setIsLogin(true);
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,10 +164,10 @@ export default function Login() {
         }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 32, margin: '0 0 8px', letterSpacing: -1 }}>
-              Welcome Back
+              {isLogin ? 'Welcome Back' : 'Join SVH 2026'}
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontFamily: 'Poppins,sans-serif', margin: 0 }}>
-              Login to your SVH 2026 portal
+              {isLogin ? 'Login to your portal' : 'Register your team profile'}
             </p>
           </div>
 
@@ -125,6 +175,24 @@ export default function Login() {
             {error && (
               <div style={{ padding: '12px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.3)', borderRadius: 8, color: '#ff6b6b', fontSize: 13, fontFamily: 'Poppins,sans-serif', textAlign: 'center' }}>
                 {error}
+              </div>
+            )}
+            {!isLogin && (
+              <div>
+                <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Full Name</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="John Doe"
+                  style={{
+                    width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
+                    outline: 'none', transition: 'all 0.2s'
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
+                />
               </div>
             )}
             <div>
@@ -179,25 +247,32 @@ export default function Login() {
               />
             </div>
 
-            <button type="submit" style={{
+            <button type="submit" disabled={loading} style={{
               marginTop: 10, padding: '16px', background: 'linear-gradient(135deg, #FF9933, #e07800)',
               color: '#fff', borderRadius: 8, fontSize: 14, fontFamily: 'Montserrat,sans-serif',
               fontWeight: 800, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.5,
-              border: 'none', cursor: 'pointer', boxShadow: '0 6px 24px rgba(255,153,51,0.3)', transition: 'all 0.25s',
+              border: 'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 6px 24px rgba(255,153,51,0.3)', transition: 'all 0.25s',
+              opacity: loading ? 0.7 : 1,
             }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(255,153,51,0.45)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(255,153,51,0.3)'; }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(255,153,51,0.45)'; } }}
+              onMouseLeave={e => { if (!loading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(255,153,51,0.3)'; } }}
             >
-              Secure Login
+              {loading ? 'Processing...' : (isLogin ? 'Secure Login' : 'Create Account')}
             </button>
           </form>
 
           <div style={{ marginTop: 24, textAlign: 'center' }}>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontFamily: 'Poppins,sans-serif', margin: 0 }}>
-              Don't have an account?{' '}
-              <Link to="/guidelines" style={{ color: '#138808', fontWeight: 600, textDecoration: 'none' }}>
-                Register Now
-              </Link>
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button 
+                type="button"
+                onClick={() => { setIsLogin(!isLogin); setError(''); }}
+                style={{ 
+                  background: 'none', border: 'none', padding: 0,
+                  color: '#138808', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit'
+                }}>
+                {isLogin ? 'Register Now' : 'Login Here'}
+              </button>
             </p>
           </div>
         </div>
