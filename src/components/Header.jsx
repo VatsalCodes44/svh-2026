@@ -77,6 +77,7 @@ export default function Header() {
   };
 
   const navLinks = [
+    { label: 'Dashboard', to: '/dashboard' },
     { label: 'Problem Statements', to: '/problem-statements' },
     { label: 'FAQs', to: '/faq' },
     { label: 'Contact Us', to: '/contact' },
