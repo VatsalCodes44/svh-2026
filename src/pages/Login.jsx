@@ -60,6 +60,13 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('team_leader');
+  
+  // New fields for team and profile
+  const [teamName, setTeamName] = useState('');
+  const [collegeName, setCollegeName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [gender, setGender] = useState('Female');
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -80,6 +87,11 @@ export default function Login() {
 
     if (!email || !password || (!isLogin && !fullName)) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    if (!isLogin && role === 'team_leader' && (!teamName || !collegeName)) {
+      setError('Please provide Team Name and College Name.');
       return;
     }
 
@@ -107,6 +119,20 @@ export default function Login() {
         if (signUpError) throw signUpError;
 
         if (authData.user) {
+          let newTeamId = null;
+
+          // If role is team leader, create the team first
+          if (role === 'team_leader') {
+            const { data: teamData, error: teamError } = await supabase
+              .from('teams')
+              .insert([{ team_name: teamName, college_name: collegeName }])
+              .select()
+              .single();
+            
+            if (teamError) throw teamError;
+            newTeamId = teamData.id;
+          }
+
           // Insert profile details
           const { error: profileError } = await supabase
             .from('profiles')
@@ -115,7 +141,10 @@ export default function Login() {
                 id: authData.user.id,
                 email,
                 full_name: fullName,
-                is_team_leader: role === 'team_leader'
+                is_team_leader: role === 'team_leader',
+                team_id: newTeamId,
+                phone: phone,
+                gender: gender
               }
             ]);
 
@@ -178,22 +207,59 @@ export default function Login() {
               </div>
             )}
             {!isLogin && (
-              <div>
-                <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Full Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Doe"
-                  style={{
-                    width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
-                    outline: 'none', transition: 'all 0.2s'
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
-                />
-              </div>
+              <>
+                <div>
+                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="John Doe"
+                    style={{
+                      width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
+                      outline: 'none', transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Phone</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="1234567890"
+                      style={{
+                        width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
+                        outline: 'none', transition: 'all 0.2s'
+                      }}
+                      onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Gender</label>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      style={{
+                        width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
+                        outline: 'none', transition: 'all 0.2s', cursor: 'pointer'
+                      }}
+                      onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
+                    >
+                      <option value="Male" style={{ background: '#0f2942' }}>Male</option>
+                      <option value="Female" style={{ background: '#0f2942' }}>Female</option>
+                    </select>
+                  </div>
+                </div>
+              </>
             )}
             <div>
               <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>User Role</label>
@@ -214,6 +280,43 @@ export default function Login() {
                 <option value="superadmin" style={{ background: '#0f2942', color: '#fff' }}>Superadmin</option>
               </select>
             </div>
+            
+            {!isLogin && role === 'team_leader' && (
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Team Name</label>
+                  <input
+                    type="text"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="E.g. Innovators"
+                    style={{
+                      width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
+                      outline: 'none', transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>College</label>
+                  <input
+                    type="text"
+                    value={collegeName}
+                    onChange={(e) => setCollegeName(e.target.value)}
+                    placeholder="E.g. VIT Bhopal"
+                    style={{
+                      width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif',
+                      outline: 'none', transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#FF9933'; e.target.style.background = 'rgba(0,0,0,0.3)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(0,0,0,0.2)'; }}
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Email Address</label>
               <input

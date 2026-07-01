@@ -10,6 +10,7 @@ import ProblemStatements from './pages/ProblemStatements';
 import FAQ from './pages/FAQ';
 import ContactUs from './pages/ContactUs';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/faq"                element={<FAQ />} />
             <Route path="/contact"            element={<ContactUs />} />
             <Route path="/login"              element={<Login />} />
+            <Route path="/dashboard"          element={<Dashboard />} />
           </Routes>
         </main>
         <Footer />
