@@ -210,7 +210,8 @@ export default function Header() {
               </Link>
 
               {/* Register Now — hidden on mobile */}
-              <Link to="/guidelines"
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSdlo9-cRVxCWQ9e_LegwoohTSDeiR7oPIUrZCdgmwNdsipbdw/viewform"
+                target="_blank" rel="noopener noreferrer"
                 style={{
                   padding: '8px 18px',
                   background: 'linear-gradient(135deg, #FF9933, #e07800)',
@@ -231,7 +232,7 @@ export default function Header() {
                 onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(255,153,51,0.35)'; }}
               >
                 Register
-              </Link>
+              </a>
 
               {/* Hamburger — shown only on mobile */}
               <button
@@ -298,10 +299,12 @@ export default function Header() {
                   style={{ flex: 1, textAlign: 'center', padding: '11px 10px', background: 'transparent', color: 'rgba(255,255,255,0.85)', border: '1.5px solid rgba(255,255,255,0.28)', borderRadius: 7, fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }}>
                   Login
                 </Link>
-                <Link to="/guidelines" onClick={() => setMobileOpen(false)}
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdlo9-cRVxCWQ9e_LegwoohTSDeiR7oPIUrZCdgmwNdsipbdw/viewform"
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={() => setMobileOpen(false)}
                   style={{ flex: 1, textAlign: 'center', padding: '11px 10px', background: 'linear-gradient(135deg,#FF9933,#e07800)', color: '#fff', borderRadius: 7, fontSize: 12, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1, boxShadow: '0 4px 12px rgba(255,153,51,0.35)' }}>
                   Register
-                </Link>
+                </a>
               </div>
             </div>
           )}
