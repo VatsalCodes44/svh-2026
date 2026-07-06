@@ -384,7 +384,7 @@ export default function Guidelines() {
               <h3 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 24, marginBottom: 12 }}>Ready to Register?</h3>
               <p style={{ fontFamily: 'Poppins,sans-serif', color: 'rgba(255,255,255,0.9)', fontSize: 14, lineHeight: 1.6, marginBottom: 24, maxWidth: 500, margin: '0 auto 24px' }}>Registration opens 1 July 2026. Form your team of 6 and get started!</p>
               <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdlo9-cRVxCWQ9e_LegwoohTSDeiR7oPIUrZCdgmwNdsipbdw/viewform"
+                <a href="https://forms.gle/zYNYkjygKYfbAjhy6"
                   target="_blank" rel="noopener noreferrer"
                   style={{
                     display: 'inline-block', padding: '14px 28px', background: '#fff',
