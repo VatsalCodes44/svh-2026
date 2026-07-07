@@ -375,16 +375,32 @@ export default function Login() {
 
           <div style={{ marginTop: 24, textAlign: 'center' }}>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontFamily: 'Poppins,sans-serif', margin: 0 }}>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button 
-                type="button"
-                onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                style={{ 
-                  background: 'none', border: 'none', padding: 0,
-                  color: '#138808', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit'
-                }}>
-                {isLogin ? 'Register Now' : 'Login Here'}
-              </button>
+              {isLogin ? (
+                <>
+                  Don't have an account?{' '}
+                  <a 
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSdlo9-cRVxCWQ9e_LegwoohTSDeiR7oPIUrZCdgmwNdsipbdw/viewform?usp=send_form" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ color: '#138808', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    Register Now
+                  </a>
+                </>
+              ) : (
+                <>
+                  Already have an account?{' '}
+                  <button 
+                    type="button"
+                    onClick={() => { setIsLogin(true); setError(''); }}
+                    style={{ 
+                      background: 'none', border: 'none', padding: 0,
+                      color: '#138808', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit'
+                    }}>
+                    Login Here
+                  </button>
+                </>
+              )}
             </p>
           </div>
         </div>

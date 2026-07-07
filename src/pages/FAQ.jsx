@@ -362,37 +362,12 @@ export default function FAQ() {
             </span>
           </h1>
 
-          <p style={{ ...a(360), color: 'rgba(255,255,255,0.7)', fontSize: 'clamp(14px,2vw,17px)', fontFamily: 'Poppins,sans-serif', maxWidth: 620, margin: '0 auto 32px', lineHeight: 1.75 }}>
-            Got questions about SVH 2026? We've got answers. Browse by category or scroll through all {totalFAQs} questions below.
-          </p>
+
 
         </div>
       </section>
 
-      {/* ── CATEGORY FILTER ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '0 20px', position: 'sticky', top: 63, zIndex: 100, overflowX: 'auto' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', gap: 0, whiteSpace: 'nowrap' }}>
-          {[{ id: 'all', label: 'All Questions', icon: '📋', color: '#0f2942' }, ...faqCategories].map((cat) => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <button key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                style={{
-                  padding: '14px 18px',
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 12,
-                  color: isActive ? (cat.color || '#FF9933') : '#888',
-                  borderBottom: isActive ? `2.5px solid ${cat.color || '#FF9933'}` : '2.5px solid transparent',
-                  transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                <span style={{ fontSize: 14 }}>{cat.icon}</span>
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+
 
       {/* ── FAQ CONTENT ── */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '52px 16px 80px' }}>
