@@ -111,8 +111,28 @@ export default function Header() {
         .dropdown-item:hover { background: rgba(255,153,51,0.12) !important; color: #FF9933 !important; padding-left: 24px !important; }
       `}</style>
 
-      <header id="svh-nav" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
+      <header id="svh-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, width: '100%' }}>
 
+        {/* Announcement Banner */}
+        <div style={{
+          background: 'linear-gradient(90deg, #FF9933, #e07800)',
+          color: '#fff',
+          textAlign: 'center',
+          padding: '6px 16px',
+          fontSize: 13,
+          fontFamily: 'Montserrat,sans-serif',
+          fontWeight: 700,
+          letterSpacing: 1,
+          boxShadow: '0 2px 10px rgba(255,153,51,0.3)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 12
+        }}>
+          <span style={{ fontSize: 16 }}>🚀</span>
+          <span>Registrations are now OPEN! Secure your spot before slots fill up.</span>
+          <span style={{ fontSize: 16 }}>🚀</span>
+        </div>
         {/* ── MAIN NAV ── */}
         <nav style={{
           background: scrolled ? 'rgba(7,25,44,0.97)' : '#0f2942',

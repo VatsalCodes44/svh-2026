@@ -318,10 +318,10 @@ export default function Guidelines() {
 
               <AccordionItem icon="📝" title="PPT Guidelines" accentColor="#FF9933">
                 <div style={{ display: 'grid', gap: 10, marginTop: 8 }}>
-                  <RuleCard num="!" title="Download Template" desc="DOWNLOAD PPT FORMAT FROM HERE [DRIVE LINK]" color="#FF9933" />
+                  <RuleCard num="!" title="Download Template" desc={<>DOWNLOAD PPT FORMAT FROM HERE: <a href="https://docs.google.com/presentation/d/17MCZsoHCGdJTqVKxhuHExweQI1M-0w59/edit?usp=drive_link&ouid=105509570291334746986&rtpof=true&sd=true" target="_blank" rel="noreferrer" style={{ color: '#FF9933', fontWeight: 700, textDecoration: 'underline' }}>PPT Template Link</a></>} color="#FF9933" />
                   <RuleCard num="01" title="Strict 6-Slide Limit" desc="Your entire presentation must contain exactly or under 6 slides, which includes your mandatory title slide." color="#FF9933" />
-                  <RuleCard num="02" title="PDF Format Only" desc="Save and export your final file explicitly as a PDF. The SIH portal completely rejects standard .pptx, .docx, or Word formats." color="#FF9933" />
-                  <RuleCard num="03" title="Official Template Integrity" desc="Download the official presentation deck from the SIH Official Portal. You must never alter the pre-defined titles or pointers on the slides." color="#FF9933" />
+                  <RuleCard num="02" title="PDF Format Only" desc="Save and export your final file explicitly as a PDF. The SVH portal completely rejects standard .pptx, .docx, or Word formats." color="#FF9933" />
+                  <RuleCard num="03" title="Official Template Integrity" desc="Download the official presentation deck from the SVH Official Portal. You must never alter the pre-defined titles or pointers on the slides." color="#FF9933" />
                   <RuleCard num="04" title="Text Minimization" desc="Avoid chunks of paragraphs completely. Present everything using brief, crisp bullet points, graphical data, or visual infographics." color="#FF9933" />
                   <h4 style={{ margin: '16px 0 8px', fontSize: 14, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, color: '#0f2942' }}>Slide-by-Slide Content Structure</h4>
                   <RuleCard num="S1" title="Title & Team Details" desc="Problem ID, exact Problem Title, Team Info (name, college, leader, members), Category (SW/HW)." color="#FF9933" />
@@ -333,7 +333,7 @@ export default function Guidelines() {
                 </div>
               </AccordionItem>
 
-              <AccordionItem icon="⚖️" title="SIH Presentation Judging Criteria" accentColor="#138808">
+              <AccordionItem icon="⚖️" title="SVH Presentation Judging Criteria" accentColor="#138808">
                 <div style={{ display: 'grid', gap: 10, marginTop: 8 }}>
                   <RuleCard num="01" title="Problem-Solution Alignment" desc="Direct capability of the proposed idea to resolve every edge case of the official ministry problem statement." color="#138808" />
                   <RuleCard num="02" title="Innovation & Uniqueness" desc="Novelty of your Unique Value Proposition (UVP) compared to current market solutions, avoiding basic clone concepts." color="#138808" />
