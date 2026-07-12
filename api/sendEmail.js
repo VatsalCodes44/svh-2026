@@ -491,8 +491,8 @@ export default async function handler(req, res) {
       const num = i + 2; 
       
       if (mem && mem.name) {
-        html = html.replace(new RegExp(\`{{MEMBER_\${num}_NAME}}\`, 'g'), mem.name);
-        html = html.replace(new RegExp(\`{{MEMBER_\${num}_REGNO}}\`, 'g'), mem.regNo || '-');
+        html = html.replace(new RegExp(`{{MEMBER_${num}_NAME}}`, 'g'), mem.name);
+        html = html.replace(new RegExp(`{{MEMBER_${num}_REGNO}}`, 'g'), mem.regNo || '-');
       } else {
         html = html.replace(new RegExp(`{{MEMBER_${num}_NAME}}`, 'g'), '-');
         html = html.replace(new RegExp(`{{MEMBER_${num}_REGNO}}`, 'g'), '-');
