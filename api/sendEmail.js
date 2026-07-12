@@ -492,15 +492,26 @@ export default async function handler(req, res) {
         html = html.replace(new RegExp(\`{{MEMBER_\${num}_NAME}}\`, 'g'), mem.name);
         html = html.replace(new RegExp(\`{{MEMBER_\${num}_REGNO}}\`, 'g'), mem.regNo || '-');
       } else {
-        html = html.replace(new RegExp(\`{{MEMBER_\${num}_NAME}}\`, 'g'), '-');
-        html = html.replace(new RegExp(\`{{MEMBER_\${num}_REGNO}}\`, 'g'), '-');
+        html = html.replace(new RegExp(`{{MEMBER_${num}_NAME}}`, 'g'), '-');
+        html = html.replace(new RegExp(`{{MEMBER_${num}_REGNO}}`, 'g'), '-');
       }
     }
 
+    // Gather CC emails
+    const ccEmails = [];
+    if (extraMembersData) {
+      extraMembersData.forEach(mem => {
+        if (mem && mem.email) {
+          ccEmails.push(mem.email);
+        }
+      });
+    }
+
     const mailOptions = {
-      from: \`"Blockchain Club" <\${process.env.EMAIL_USER}>\`,
+      from: `"Blockchain Club" <${process.env.EMAIL_USER}>`,
       to: leaderEmail,
-      subject: \`Registration Confirmed: Smart VIT Hackathon 2026 - \${teamName}\`,
+      cc: ccEmails.length > 0 ? ccEmails.join(', ') : undefined,
+      subject: `Registration Confirmed: Smart VIT Hackathon 2026 - ${teamName}`,
       html: html,
     };
 
