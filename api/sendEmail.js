@@ -231,10 +231,21 @@ export default async function handler(req, res) {
 </body>
 </html>`;
 
-    // 3. Dispatch the Email Configuration
+    // 3. Extract member emails for CC
+    let ccEmails = [];
+    if (Array.isArray(extraMembersData) && extraMembersData.length > 0) {
+      extraMembersData.forEach(member => {
+        if (member && member.email) {
+          ccEmails.push(member.email);
+        }
+      });
+    }
+
+    // 4. Dispatch the Email Configuration
     const mailOptions = {
       from: `"Blockchain Club, VIT Bhopal" <blockchainvitb@gmail.com>`,
       to: leaderEmail,
+      cc: ccEmails.length > 0 ? ccEmails.join(', ') : undefined,
       subject: `SVH 2026 — Registration Confirmed for ${teamName}! 🎉`,
       html: htmlContent,
     };
