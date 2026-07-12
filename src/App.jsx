@@ -13,6 +13,7 @@ import ContactUs from './pages/ContactUs';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
+import TestEmail from './pages/TestEmail';
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -105,6 +106,7 @@ function App() {
             <Route path="/login"              element={<Login />} />
             <Route path="/dashboard"          element={<Dashboard />} />
             <Route path="/leader-dashboard"   element={<LeaderDashboard />} />
+            <Route path="/test-email"         element={<TestEmail />} />
           </Routes>
         </main>
         <Footer />
