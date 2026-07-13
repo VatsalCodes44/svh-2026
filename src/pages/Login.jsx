@@ -60,7 +60,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('team_leader');
-  
+
   // New fields for team and profile
   const [teamName, setTeamName] = useState('');
   const [collegeName, setCollegeName] = useState('');
@@ -99,8 +99,26 @@ export default function Login() {
 
     try {
       if (isLogin) {
+        // Evaluator Login Check
+        if (role === 'evaluator') {
+          if (email === 'evaluator@demoogmail.com' && password === 'demoevaluator850') {
+            localStorage.setItem('evaluator_session', JSON.stringify({
+              email: 'evaluator@demoogmail.com',
+              name: 'Dr. Rajesh Kumar (Demo Evaluator)',
+              role: 'Evaluator'
+            }));
+            alert('Evaluator Login successful!');
+            navigate('/evaluator-dashboard');
+            return;
+          } else {
+            setError('Invalid Evaluator credentials.');
+            setLoading(false);
+            return;
+          }
+        }
+
         // Sign In
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -109,6 +127,22 @@ export default function Login() {
 
         alert('Login successful! Welcome to SVH 2026.');
         if (role === 'team_leader') {
+          // Fetch profile and team info
+          const { data: profileData, error: profileErr } = await supabase
+            .from('profiles')
+            .select('*, teams(*)')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (profileErr) throw profileErr;
+
+          localStorage.setItem('leader_session', JSON.stringify({
+            leaderName: profileData.full_name,
+            teamName: profileData.teams?.team_name || 'No Team',
+            teamId: profileData.team_id,
+            collegeName: profileData.teams?.college_name || '',
+          }));
+
           navigate('/leader-dashboard');
         } else {
           navigate('/');
@@ -129,15 +163,15 @@ export default function Login() {
           if (role === 'team_leader') {
             const { data: teamData, error: teamError } = await supabase
               .from('teams')
-              .insert([{ 
-                team_name: teamName, 
+              .insert([{
+                team_name: teamName,
                 college_name: collegeName,
                 email: email,
                 password: password
               }])
               .select()
               .single();
-            
+
             if (teamError) throw teamError;
             newTeamId = teamData.id;
           }
@@ -202,19 +236,128 @@ export default function Login() {
           textAlign: 'center',
         }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-          <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 28, margin: '0 0 12px', letterSpacing: -0.5 }}>
-            Login Portal Coming Soon!
+          <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 28, margin: '0 0 20px', letterSpacing: -0.5 }}>
+            Login Portal
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, fontFamily: 'Poppins,sans-serif', margin: 0, lineHeight: 1.6 }}>
-            The login section will be activated once you receive your credentials via email.
-          </p>
+
+          {error && (
+            <div style={{
+              background: 'rgba(255, 107, 107, 0.15)',
+              border: '1px solid rgba(255, 107, 107, 0.3)',
+              color: '#ff6b6b',
+              padding: '12px',
+              borderRadius: 8,
+              fontSize: 14,
+              marginBottom: 20,
+              fontFamily: 'Poppins,sans-serif',
+              textAlign: 'left'
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 6, fontFamily: 'Poppins,sans-serif' }}>
+                Role
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  color: '#fff',
+                  fontSize: 14,
+                  fontFamily: 'Poppins,sans-serif',
+                  outline: 'none',
+                }}
+              >
+                <option value="team_leader" style={{ background: '#0f2942', color: '#fff' }}>Team Leader</option>
+                <option value="evaluator" style={{ background: '#0f2942', color: '#fff' }}>Evaluator</option>
+                <option value="super_admin" style={{ background: '#0f2942', color: '#fff' }}>Super Admin</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 6, fontFamily: 'Poppins,sans-serif' }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="Enter email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  color: '#fff',
+                  fontSize: 14,
+                  fontFamily: 'Poppins,sans-serif',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 6, fontFamily: 'Poppins,sans-serif' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  color: '#fff',
+                  fontSize: 14,
+                  fontFamily: 'Poppins,sans-serif',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'linear-gradient(135deg, #FF9933, #e07800)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 14,
+                fontFamily: 'Montserrat,sans-serif',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(255,153,51,0.3)',
+                transition: 'all 0.2s',
+              }}
+            >
+              {loading ? 'Authenticating...' : 'Sign In'}
+            </button>
+          </form>
         </div>
 
         {/* Tricolour footer strip - fixed to the card */}
         <div style={{ ...a(300), display: 'flex', justifyContent: 'center', marginTop: 30 }}>
-           <div style={{ height: 3, width: 40, background: '#FF9933', borderRadius: 2 }} />
-           <div style={{ height: 3, width: 20, background: '#fff', borderRadius: 2, margin: '0 6px' }} />
-           <div style={{ height: 3, width: 40, background: '#138808', borderRadius: 2 }} />
+          <div style={{ height: 3, width: 40, background: '#FF9933', borderRadius: 2 }} />
+          <div style={{ height: 3, width: 20, background: '#fff', borderRadius: 2, margin: '0 6px' }} />
+          <div style={{ height: 3, width: 40, background: '#138808', borderRadius: 2 }} />
         </div>
       </div>
     </section>

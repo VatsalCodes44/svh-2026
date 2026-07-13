@@ -117,8 +117,8 @@ export default function LeaderDashboard() {
             fontSize: 13, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: 1, border: '1.5px solid rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'all 0.2s'
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#FF9933'; e.currentTarget.style.color = '#FF9933'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#FF9933'; e.currentTarget.style.color = '#FF9933'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.color = '#fff'; }}
           >
             Return to Home
           </button>

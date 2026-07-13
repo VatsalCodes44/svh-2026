@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -13,17 +13,20 @@ import ContactUs from './pages/ContactUs';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
+import EvaluatorDashboard from './pages/EvaluatorDashboard';
 import TestEmail from './pages/TestEmail';
 
-function App() {
+function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  const isDashboard = location.pathname === '/leader-dashboard' || location.pathname === '/evaluator-dashboard';
 
   return (
-    <Router>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-        <Header />
-        
-        {/* Floating Download Materials Menu */}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      {!isDashboard && <Header />}
+
+      {/* Floating Download Materials Menu */}
+      {!isDashboard && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
           {menuOpen && (
             <div style={{
@@ -95,22 +98,31 @@ function App() {
             <span>Download Materials</span>
           </button>
         </div>
+      )}
 
-        <main style={{ flex: 1, paddingTop: 90 }}>
-          <Routes>
-            <Route path="/"                   element={<Home />} />
-            <Route path="/guidelines"         element={<Guidelines />} />
-            <Route path="/problem-statements" element={<ProblemStatements />} />
-            <Route path="/faq"                element={<FAQ />} />
-            <Route path="/contact"            element={<ContactUs />} />
-            <Route path="/login"              element={<Login />} />
-            <Route path="/dashboard"          element={<Dashboard />} />
-            <Route path="/leader-dashboard"   element={<LeaderDashboard />} />
-            <Route path="/test-email"         element={<TestEmail />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <main style={{ flex: 1, paddingTop: isDashboard ? 0 : 90 }}>
+        <Routes>
+          <Route path="/"                   element={<Home />} />
+          <Route path="/guidelines"         element={<Guidelines />} />
+          <Route path="/problem-statements" element={<ProblemStatements />} />
+          <Route path="/faq"                element={<FAQ />} />
+          <Route path="/contact"            element={<ContactUs />} />
+          <Route path="/login"              element={<Login />} />
+          <Route path="/dashboard"          element={<Dashboard />} />
+          <Route path="/leader-dashboard"   element={<LeaderDashboard />} />
+          <Route path="/evaluator-dashboard" element={<EvaluatorDashboard />} />
+          <Route path="/test-email"         element={<TestEmail />} />
+        </Routes>
+      </main>
+      {!isDashboard && <Footer />}
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
