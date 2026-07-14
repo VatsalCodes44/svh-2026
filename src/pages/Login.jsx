@@ -208,9 +208,6 @@ export default function Login() {
         setIsLogin(true);
       }
     } catch (err) {
-      if (isLogin && err.message === 'Invalid Email or Password. Please try again.') {
-        alert(err.message);
-      }
       setError(err.message || 'An error occurred during authentication.');
     } finally {
       setLoading(false);
