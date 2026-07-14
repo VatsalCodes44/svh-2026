@@ -118,10 +118,11 @@ export default function Login() {
         }
 
         // Sign In
-        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const authOptions = role === 'team_leader' 
+          ? { phone: email, password } 
+          : { email, password };
+
+        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword(authOptions);
 
         if (signInError) {
           throw new Error('Invalid Email or Password. Please try again.');
@@ -153,10 +154,11 @@ export default function Login() {
         }
       } else {
         // Sign Up
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const signUpOptions = role === 'team_leader'
+          ? { phone: email, password }
+          : { email, password };
+
+        const { data: authData, error: signUpError } = await supabase.auth.signUp(signUpOptions);
 
         if (signUpError) throw signUpError;
 
