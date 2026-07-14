@@ -117,48 +117,52 @@ export default function Login() {
           }
         }
 
-        // Sign In
-        const authOptions = role === 'team_leader' 
-          ? { phone: email, password } 
-          : { email, password };
+        if (role === 'team_leader') {
+          // Fetch and verify directly from teams table
+          const { data: teamData, error: teamErr } = await supabase
+            .from('teams')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .maybeSingle();
 
-        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword(authOptions);
+          if (teamErr) {
+            console.error("Team fetch error:", teamErr);
+            throw new Error('An error occurred during authentication.');
+          }
+
+          if (!teamData) {
+            throw new Error('Invalid Email or Password. Please try again.');
+          }
+
+          alert('Login successful! Welcome to SVH 2026.');
+
+          localStorage.setItem('leader_session', JSON.stringify({
+            leaderName: 'Team Leader', // teams table doesn't have a separate leader name
+            teamName: teamData.team_name || 'No Team',
+            teamId: teamData.id,
+            collegeName: teamData.college_name || '',
+          }));
+
+          navigate('/coming-soon');
+          return;
+        }
+
+        // For other roles (like super_admin)
+        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
         if (signInError) {
           throw new Error('Invalid Email or Password. Please try again.');
         }
 
         alert('Login successful! Welcome to SVH 2026.');
-        if (role === 'team_leader') {
-          // Fetch profile and team info
-          const { data: profileData, error: profileErr } = await supabase
-            .from('profiles')
-            .select('*, teams(*)')
-            .eq('id', authData.user.id)
-            .maybeSingle();
-
-          if (profileErr) {
-            console.error("Profile fetch error:", profileErr);
-          }
-
-          localStorage.setItem('leader_session', JSON.stringify({
-            leaderName: profileData?.full_name || 'Team Leader',
-            teamName: profileData?.teams?.team_name || 'No Team',
-            teamId: profileData?.team_id || null,
-            collegeName: profileData?.teams?.college_name || '',
-          }));
-
-          navigate('/coming-soon');
-        } else {
-          navigate('/');
-        }
+        navigate('/');
       } else {
         // Sign Up
-        const signUpOptions = role === 'team_leader'
-          ? { phone: email, password }
-          : { email, password };
-
-        const { data: authData, error: signUpError } = await supabase.auth.signUp(signUpOptions);
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
         if (signUpError) throw signUpError;
 
