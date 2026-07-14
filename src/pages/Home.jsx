@@ -299,6 +299,8 @@ function HeroSection() {
 
         </div>
 
+
+
         {/* Info chips */}
         <div style={{ ...a(820), display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 42 }}>
           {[
@@ -1035,11 +1037,266 @@ function RegistrationCTA() {
 }
 
 /* ═══════════════════════════════════════════════
+   ORIENTATION POPUP MODAL
+   ═══════════════════════════════════════════════ */
+function OrientationModal() {
+  const [isOpen, setIsOpen] = useState(true);
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 99999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(7, 25, 44, 0.4)',
+      backdropFilter: 'blur(3px)',
+      padding: 20
+    }}>
+      {/* Backdrop close area */}
+      <div 
+        onClick={() => setIsOpen(false)} 
+        style={{ position: 'absolute', inset: 0, cursor: 'pointer' }} 
+      />
+
+      {/* Modal Container */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: 580,
+        background: 'linear-gradient(135deg, #FF9933 0%, #138808 100%)',
+        borderRadius: 24,
+        padding: 2, // Border effect
+        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 153, 51, 0.15)',
+        zIndex: 10,
+        animation: 'pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+      }}>
+        <div style={{
+          background: 'rgba(7, 25, 44, 0.98)',
+          borderRadius: 22,
+          padding: '36px 32px',
+          position: 'relative',
+        }}>
+          {/* Close button */}
+          <button 
+            onClick={() => setIsOpen(false)} 
+            style={{
+              position: 'absolute',
+              top: 18,
+              right: 18,
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              color: '#fff',
+              fontSize: 16,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              zIndex: 12
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.transform = 'none';
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Badge */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 153, 51, 0.15)',
+            border: '1px solid rgba(255, 153, 51, 0.35)',
+            borderRadius: 20,
+            padding: '4px 14px',
+            marginBottom: 20
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF9933', display: 'inline-block' }} />
+            <span style={{ color: '#FF9933', fontSize: 10, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+              Orientation Session
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 style={{
+            fontFamily: 'Montserrat,sans-serif',
+            fontSize: 'clamp(20px, 4vw, 24px)',
+            fontWeight: 900,
+            color: '#fff',
+            margin: '0 0 10px',
+            letterSpacing: -0.5
+          }}>
+            SVH-Orientation Session
+          </h3>
+
+          {/* Date & Time */}
+          <p style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            color: '#FF9933',
+            fontSize: 15,
+            fontFamily: 'Poppins,sans-serif',
+            fontWeight: 600,
+            margin: '0 0 24px'
+          }}>
+            📅 <span>Wednesday, July 15 · 9:00 – 10:00pm</span>
+          </p>
+
+          {/* Description / Join Details */}
+          <div style={{
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            paddingTop: 20,
+            marginBottom: 28,
+            textAlign: 'left'
+          }}>
+            <h4 style={{
+              fontFamily: 'Montserrat,sans-serif',
+              fontSize: 11,
+              fontWeight: 800,
+              color: 'rgba(255, 255, 255, 0.4)',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              margin: '0 0 10px'
+            }}>
+              Description
+            </h4>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.85)',
+              fontSize: 13.5,
+              fontFamily: 'Poppins,sans-serif',
+              lineHeight: 1.65,
+              margin: '0 0 20px'
+            }}>
+              We'll be hosting an orientation session for all registered teams, walking you through the problem statement selection process, PPT submission guidelines, judging criteria, and answering any questions you have before Round 1 begins.
+            </p>
+
+            <h4 style={{
+              fontFamily: 'Montserrat,sans-serif',
+              fontSize: 11,
+              fontWeight: 800,
+              color: 'rgba(255, 255, 255, 0.4)',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              margin: '0 0 10px'
+            }}>
+              Google Meet Joining Info
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ color: '#fff', fontSize: 13.5, fontFamily: 'Poppins,sans-serif' }}>
+                <strong style={{ color: 'rgba(255,255,255,0.6)' }}>Video call link:</strong>{' '}
+                <a 
+                  href="https://meet.google.com/dmi-dtur-erv" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ color: '#138808', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  https://meet.google.com/dmi-dtur-erv
+                </a>
+              </div>
+              <div style={{ color: '#fff', fontSize: 13.5, fontFamily: 'Poppins,sans-serif' }}>
+                <strong style={{ color: 'rgba(255,255,255,0.6)' }}>Live stream:</strong>{' '}
+                <a 
+                  href="https://stream.meet.google.com/stream/1b2d060c-6900-472c-99ba-3f2213eef9ec" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ color: '#FF9933', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  https://stream.meet.google.com/stream/1b2d060c-6900-472c-99ba-3f2213eef9ec
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <a 
+              href="https://meet.google.com/dmi-dtur-erv" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 24px',
+                background: '#138808',
+                color: '#fff',
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontFamily: 'Montserrat,sans-serif',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(19, 136, 8, 0.3)',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(19, 136, 8, 0.45)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(19, 136, 8, 0.3)';
+              }}
+            >
+              💻 Join Video Call
+            </a >
+
+            <a 
+              href="https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=M3R1MWRwNWg3YWJ2Ymk3dXRmMXU5OGFscnEgZGhhaXJ5YS4yM2JjZTEwMjI1QHZpdGJob3BhbC5hYy5pbg&tmsrc=dhairya.23bce10225%40vitbhopal.ac.in" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 24px',
+                background: 'transparent',
+                color: '#FF9933',
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontFamily: 'Montserrat,sans-serif',
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: '1.5px solid rgba(255, 153, 51, 0.4)',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255, 153, 51, 0.08)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              🗓️ Add to Calendar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
    HOME PAGE
    ═══════════════════════════════════════════════ */
 export default function Home() {
   return (
     <div style={{ width: '100%' }}>
+      <OrientationModal />
       <HeroSection />
       <NewsTicker />
       <EventRoundsCarousel />
