@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
 import EvaluatorDashboard from './pages/EvaluatorDashboard';
 import TestEmail from './pages/TestEmail';
+import ComingSoon from './pages/ComingSoon';
 
 function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -112,6 +113,7 @@ function AppContent() {
           <Route path="/leader-dashboard"   element={<LeaderDashboard />} />
           <Route path="/evaluator-dashboard" element={<EvaluatorDashboard />} />
           <Route path="/test-email"         element={<TestEmail />} />
+          <Route path="/coming-soon"        element={<ComingSoon />} />
         </Routes>
       </main>
       {!isDashboard && <Footer />}

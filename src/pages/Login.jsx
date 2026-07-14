@@ -143,7 +143,7 @@ export default function Login() {
             collegeName: profileData.teams?.college_name || '',
           }));
 
-          navigate('/leader-dashboard');
+          navigate('/coming-soon');
         } else {
           navigate('/');
         }
@@ -198,6 +198,9 @@ export default function Login() {
         setIsLogin(true);
       }
     } catch (err) {
+      if (isLogin) {
+        alert('Invalid Email or Password. Please try again.');
+      }
       setError(err.message || 'An error occurred during authentication.');
     } finally {
       setLoading(false);
