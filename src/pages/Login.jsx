@@ -107,7 +107,6 @@ export default function Login() {
               name: 'Dr. Rajesh Kumar (Demo Evaluator)',
               role: 'Evaluator'
             }));
-            alert('Evaluator Login successful!');
             navigate('/evaluator-dashboard');
             return;
           } else {
@@ -135,8 +134,6 @@ export default function Login() {
             throw new Error('Invalid Email or Password. Please try again.');
           }
 
-          alert('Login successful! Welcome to SVH 2026.');
-
           localStorage.setItem('leader_session', JSON.stringify({
             leaderName: 'Team Leader', // teams table doesn't have a separate leader name
             teamName: teamData.team_name || 'No Team',
@@ -155,7 +152,6 @@ export default function Login() {
           throw new Error('Invalid Email or Password. Please try again.');
         }
 
-        alert('Login successful! Welcome to SVH 2026.');
         navigate('/');
       } else {
         // Sign Up
