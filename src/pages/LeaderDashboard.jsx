@@ -1,52 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-
-/* Shared Background Assets */
-function AshokaChakra({ size = 200, opacity = 0.08, spin = true }) {
-  const spokes = Array.from({ length: 24 }, (_, i) => i);
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200"
-      style={{ opacity, animation: spin ? 'spin-slow 40s linear infinite' : 'none', display: 'block', flexShrink: 0 }}>
-      <circle cx="100" cy="100" r="96" fill="none" stroke="#06038D" strokeWidth="4" />
-      <circle cx="100" cy="100" r="12" fill="#06038D" />
-      {spokes.map(i => {
-        const a = (i * 15 * Math.PI) / 180;
-        return <line key={i} x1={100 + 12 * Math.cos(a)} y1={100 + 12 * Math.sin(a)} x2={100 + 92 * Math.cos(a)} y2={100 + 92 * Math.sin(a)} stroke="#06038D" strokeWidth="1.5" />;
-      })}
-      <circle cx="100" cy="100" r="78" fill="none" stroke="#06038D" strokeWidth="1" />
-    </svg>
-  );
-}
-
-function FloatingParticles({ count = 18 }) {
-  const particles = useMemo(() =>
-    Array.from({ length: count }, (_, i) => ({
-      id: i,
-      left: `${(i * 37 + 11) % 95 + 2}%`,
-      size: (i % 3) + 2,
-      duration: 12 + (i % 7) * 2.5,
-      delay: -((i * 3.7) % 12),
-      color: i % 3 === 0
-        ? 'rgba(255,153,51,0.45)'
-        : i % 3 === 1
-          ? 'rgba(19,136,8,0.35)'
-          : 'rgba(255,255,255,0.2)',
-    })), [count]);
-
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
-      {particles.map(p => (
-        <div key={p.id} style={{
-          position: 'absolute', bottom: '-8px', left: p.left,
-          width: p.size, height: p.size, borderRadius: '50%', background: p.color,
-          animation: `particle-drift ${p.duration}s linear ${p.delay}s infinite`,
-          willChange: 'transform',
-        }} />
-      ))}
-    </div>
-  );
-}
 
 export default function LeaderDashboard() {
   const [m, setM] = useState(false);
@@ -96,35 +50,37 @@ export default function LeaderDashboard() {
   return (
     <section style={{
       position: 'relative', minHeight: 'calc(100vh - 60px)',
-      background: 'linear-gradient(160deg, #ffffff 0%, #f0f4f8 45%, #ffffff 100%)',
+      background: '#f8f9fa',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      overflow: 'hidden', padding: '100px 20px 60px',
+      overflow: 'hidden', padding: 0,
     }}>
-      <FloatingParticles count={22} />
-
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }}>
-        <AshokaChakra size={640} opacity={0.045} spin />
-      </div>
-
-      <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(255,153,51,0.08) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
-      <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(19,136,8,0.06) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
-
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 1000 }}>
-        <div style={{ textAlign: 'center', marginBottom: 40, ...a(100) }}>
-          <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#06038D', fontSize: 36, margin: '0 0 12px', letterSpacing: -1 }}>
+      {/* Blue Header Section */}
+      <div style={{
+        width: '100%',
+        background: 'linear-gradient(135deg, #07192c 0%, #06038D 100%)',
+        padding: '80px 20px 60px',
+        textAlign: 'center',
+        position: 'relative',
+        zIndex: 10,
+        boxShadow: '0 10px 30px rgba(6,3,141,0.15)'
+      }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', ...a(100) }}>
+          <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#ffffff', fontSize: 36, margin: '0 0 12px', letterSpacing: -1 }}>
             Team Leader Dashboard
           </h1>
           {teamInfo && (
-            <p style={{ color: '#0f2942', fontSize: 18, fontFamily: 'Poppins,sans-serif', margin: 0 }}>
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 18, fontFamily: 'Poppins,sans-serif', margin: 0 }}>
               Team: <strong style={{ color: '#FF9933' }}>{teamInfo.teamName}</strong> | {teamInfo.collegeName}
             </p>
           )}
         </div>
+      </div>
 
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 1000, padding: '40px 20px' }}>
         <div style={{
           ...a(200),
-          background: 'rgba(255, 255, 255, 0.8)',
-          border: '1px solid rgba(6, 3, 141, 0.15)',
+          background: '#ffffff',
+          border: '1px solid rgba(6, 3, 141, 0.1)',
           borderRadius: 20, padding: '40px 32px',
           backdropFilter: 'blur(16px)',
           boxShadow: '0 16px 40px rgba(6,3,141,0.05)',
