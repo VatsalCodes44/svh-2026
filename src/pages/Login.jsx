@@ -144,7 +144,7 @@ export default function Login() {
             collegeName: teamData.college_name || '',
           }));
 
-          navigate('/coming-soon');
+          navigate('/leader-dashboard');
           return;
         }
 
