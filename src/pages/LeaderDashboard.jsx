@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { STATEMENTS } from '../data/problemStatements';
 
 /* Shared Background Assets */
 function AshokaChakra({ size = 200, opacity = 0.08, spin = true }) {
@@ -52,7 +53,18 @@ export default function LeaderDashboard() {
   const [teamInfo, setTeamInfo] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('teamDetails'); // 'teamDetails', 'submission', 'review'
+  const [activeTab, setActiveTab] = useState('teamDetails');
+
+  // Submission form state
+  const [submissionStatus, setSubmissionStatus] = useState('loading'); // 'loading', 'none', 'submitted'
+  const [submissionData, setSubmissionData] = useState(null);
+  const [problemCode, setProblemCode] = useState('');
+  const [problemTitle, setProblemTitle] = useState('');
+  const [uniqueIdea, setUniqueIdea] = useState('');
+  const [ideaDesc, setIdeaDesc] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,6 +86,20 @@ export default function LeaderDashboard() {
           
           if (error) throw error;
           setMembers(data || []);
+
+          // Fetch submission
+          const { data: subData, error: subErr } = await supabase
+            .from('team_problem_selection')
+            .select('*')
+            .eq('team_id', session.teamId)
+            .maybeSingle(); 
+          
+          if (!subErr && subData) {
+            setSubmissionData(subData);
+            setSubmissionStatus('submitted');
+          } else {
+            setSubmissionStatus('none');
+          }
         }
       } catch (err) {
         console.error("Error fetching team data:", err);
@@ -83,6 +109,57 @@ export default function LeaderDashboard() {
     }
     fetchTeamData();
   }, [navigate]);
+
+  const handleProblemCodeChange = (e) => {
+    const code = e.target.value;
+    setProblemCode(code);
+    const stmt = STATEMENTS.find(s => s.id === code);
+    if (stmt) setProblemTitle(stmt.title);
+    else setProblemTitle('');
+  };
+
+  const handleProblemTitleChange = (e) => {
+    const title = e.target.value;
+    setProblemTitle(title);
+    const stmt = STATEMENTS.find(s => s.title === title);
+    if (stmt) setProblemCode(stmt.id);
+    else setProblemCode('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitError('');
+    if (!problemCode || !problemTitle || !uniqueIdea || !ideaDesc) {
+      setSubmitError('Please fill in all fields.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload = {
+        team_id: teamInfo.teamId,
+        problem_code: problemCode,
+        problem_statement: problemTitle,
+        unique_idea: uniqueIdea,
+        idea_description: ideaDesc
+      };
+      
+      const { error } = await supabase
+        .from('team_problem_selection')
+        .insert([payload])
+        .select();
+
+      if (error) throw error;
+      
+      setSubmissionData(payload); 
+      setSubmissionStatus('submitted');
+      setActiveTab('review');
+    } catch (err) {
+      console.error("Submission error:", err);
+      setSubmitError(err.message || 'Error submitting your idea.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <section style={{
@@ -307,22 +384,77 @@ export default function LeaderDashboard() {
             <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 32, marginBottom: 28, letterSpacing: -0.5 }}>
               Submission
             </h1>
-            <div style={{ 
-              padding: '60px 20px', 
-              textAlign: 'center', 
-              background: 'rgba(255,255,255,0.02)', 
-              borderRadius: 20, 
-              border: '2px dashed rgba(255,153,51,0.25)',
-              backdropFilter: 'blur(16px)'
-            }}>
-              <div style={{ marginBottom: 20 }}></div>
-              <h3 style={{ margin: '0 0 12px', color: '#fff', fontFamily: 'Montserrat,sans-serif', fontSize: 20, fontWeight: 700 }}>
-                Project Submission Coming Soon
-              </h3>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Poppins,sans-serif', margin: 0, fontSize: 15, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
-                You will be able to submit your final project files, presentation, and demo video here when submissions open.
-              </p>
-            </div>
+            
+            {submissionStatus === 'loading' ? (
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Poppins,sans-serif' }}>Loading...</p>
+            ) : submissionStatus === 'submitted' ? (
+              <div style={{ 
+                padding: '40px 20px', 
+                textAlign: 'center', 
+                background: 'rgba(39, 174, 96, 0.1)', 
+                borderRadius: 20, 
+                border: '2px dashed rgba(39, 174, 96, 0.3)',
+                backdropFilter: 'blur(16px)'
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 20 }}>✅</div>
+                <h3 style={{ margin: '0 0 12px', color: '#2ecc71', fontFamily: 'Montserrat,sans-serif', fontSize: 20, fontWeight: 700 }}>
+                  Successfully Submitted
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'Poppins,sans-serif', margin: 0, fontSize: 15 }}>
+                  Your team has already submitted a problem statement. You can view it in the Review tab.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{ 
+                display: 'flex', flexDirection: 'column', gap: 24,
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 153, 51, 0.15)',
+                borderRadius: 20,
+                padding: '32px',
+                backdropFilter: 'blur(16px)',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.3)'
+              }}>
+                {submitError && <div style={{ color: '#ff6b6b', background: 'rgba(255,107,107,0.1)', padding: 12, borderRadius: 8, fontFamily: 'Poppins,sans-serif', fontSize: 14 }}>{submitError}</div>}
+                
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Problem Code</label>
+                    <select required value={problemCode} onChange={handleProblemCodeChange} style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none' }}>
+                      <option value="" style={{ color: '#000' }}>Select Code</option>
+                      {STATEMENTS.map(s => <option key={s.id} value={s.id} style={{ color: '#000' }}>{s.id}</option>)}
+                    </select>
+                  </div>
+                  
+                  <div style={{ flex: '2 1 300px' }}>
+                    <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Problem Statement</label>
+                    <select required value={problemTitle} onChange={handleProblemTitleChange} style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none' }}>
+                      <option value="" style={{ color: '#000' }}>Select Statement</option>
+                      {STATEMENTS.map(s => <option key={s.id} value={s.title} style={{ color: '#000' }}>{s.title}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>How your idea is unique</label>
+                    <span style={{ fontSize: 12, fontFamily: 'Poppins,sans-serif', color: uniqueIdea.length > 1000 ? '#ff6b6b' : 'rgba(255,255,255,0.5)' }}>{uniqueIdea.length} / 1000</span>
+                  </div>
+                  <textarea required maxLength={1000} value={uniqueIdea} onChange={e => setUniqueIdea(e.target.value)} style={{ width: '100%', minHeight: 120, padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', resize: 'vertical' }} placeholder="Explain what makes your approach different..." />
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Idea Description</label>
+                    <span style={{ fontSize: 12, fontFamily: 'Poppins,sans-serif', color: ideaDesc.length > 2000 ? '#ff6b6b' : 'rgba(255,255,255,0.5)' }}>{ideaDesc.length} / 2000</span>
+                  </div>
+                  <textarea required maxLength={2000} value={ideaDesc} onChange={e => setIdeaDesc(e.target.value)} style={{ width: '100%', minHeight: 180, padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', resize: 'vertical' }} placeholder="Provide a detailed description of your idea and implementation plan..." />
+                </div>
+
+                <button disabled={submitting} type="submit" style={{ background: 'linear-gradient(135deg, #FF9933, #e07800)', color: '#fff', padding: '14px 32px', borderRadius: 30, border: 'none', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 16, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, alignSelf: 'flex-start', boxShadow: '0 8px 24px rgba(255,153,51,0.4)', transition: 'all 0.3s ease' }}>
+                  {submitting ? 'Submitting...' : 'Submit Idea'}
+                </button>
+              </form>
+            )}
           </div>
         )}
 
@@ -331,26 +463,62 @@ export default function LeaderDashboard() {
             <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 32, marginBottom: 28, letterSpacing: -0.5 }}>
               Review Submissions
             </h1>
-            <div style={{ 
-              padding: '60px 20px', 
-              textAlign: 'center', 
-              background: 'rgba(255,255,255,0.02)', 
-              borderRadius: 20, 
-              border: '2px dashed rgba(255,153,51,0.25)',
-              backdropFilter: 'blur(16px)'
-            }}>
-              <div style={{ marginBottom: 20 }}></div>
-              <h3 style={{ margin: '0 0 12px', color: '#fff', fontFamily: 'Montserrat,sans-serif', fontSize: 20, fontWeight: 700 }}>
-                No Reviews Yet
-              </h3>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Poppins,sans-serif', margin: 0, fontSize: 15, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
-                Once evaluators review your submission, their feedback, scores, and status will appear here.
-              </p>
-            </div>
+
+            {submissionStatus === 'loading' ? (
+               <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Poppins,sans-serif' }}>Loading...</p>
+            ) : submissionStatus === 'submitted' && submissionData ? (
+               <div style={{ 
+                 background: 'rgba(255, 255, 255, 0.03)', 
+                 border: '1px solid rgba(255, 153, 51, 0.15)',
+                 padding: 32, 
+                 borderRadius: 20, 
+                 backdropFilter: 'blur(16px)',
+                 boxShadow: '0 16px 40px rgba(0,0,0,0.3)'
+               }}>
+                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
+                   <div style={{ background: 'rgba(255,153,51,0.2)', color: '#FF9933', padding: '6px 12px', borderRadius: 6, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, fontSize: 14, border: '1px solid rgba(255,153,51,0.3)' }}>
+                     {submissionData.problem_code}
+                   </div>
+                   <h3 style={{ margin: 0, color: '#fff', fontFamily: 'Montserrat,sans-serif', fontSize: 18, fontWeight: 700 }}>
+                     {submissionData.problem_statement}
+                   </h3>
+                 </div>
+                 
+                 <div style={{ marginBottom: 24 }}>
+                   <h4 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Unique Idea</h4>
+                   <p style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Poppins,sans-serif', fontSize: 15, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                     {submissionData.unique_idea}
+                   </p>
+                 </div>
+                 
+                 <div>
+                   <h4 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Idea Description</h4>
+                   <p style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Poppins,sans-serif', fontSize: 15, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                     {submissionData.idea_description}
+                   </p>
+                 </div>
+               </div>
+            ) : (
+              <div style={{ 
+                padding: '60px 20px', 
+                textAlign: 'center', 
+                background: 'rgba(255,255,255,0.02)', 
+                borderRadius: 20, 
+                border: '2px dashed rgba(255,153,51,0.25)',
+                backdropFilter: 'blur(16px)'
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+                <h3 style={{ margin: '0 0 12px', color: '#fff', fontFamily: 'Montserrat,sans-serif', fontSize: 20, fontWeight: 700 }}>
+                  No Submission Found
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Poppins,sans-serif', margin: 0, fontSize: 15, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
+                  You have not submitted any problem statement yet. Please go to the Submission tab to submit your idea.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </main>
     </section>
   );
 }
-
