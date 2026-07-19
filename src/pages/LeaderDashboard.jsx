@@ -60,8 +60,14 @@ export default function LeaderDashboard() {
   const [submissionData, setSubmissionData] = useState(null);
   const [problemCode, setProblemCode] = useState('');
   const [problemTitle, setProblemTitle] = useState('');
+  const [theme, setTheme] = useState('');
+  const [category, setCategory] = useState('');
+  const [ideaTitle, setIdeaTitle] = useState('');
   const [uniqueIdea, setUniqueIdea] = useState('');
   const [ideaDesc, setIdeaDesc] = useState('');
+  const [ytLink, setYtLink] = useState('');
+  const [documentLink, setDocumentLink] = useState('');
+  
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -87,9 +93,9 @@ export default function LeaderDashboard() {
           if (error) throw error;
           setMembers(data || []);
 
-          // Fetch submission
+          // Fetch submission from new submissions table
           const { data: subData, error: subErr } = await supabase
-            .from('team_problem_selection')
+            .from('submissions')
             .select('*')
             .eq('team_id', session.teamId)
             .maybeSingle(); 
@@ -114,23 +120,37 @@ export default function LeaderDashboard() {
     const code = e.target.value;
     setProblemCode(code);
     const stmt = STATEMENTS.find(s => s.id === code);
-    if (stmt) setProblemTitle(stmt.title);
-    else setProblemTitle('');
+    if (stmt) {
+      setProblemTitle(stmt.title);
+      setTheme(stmt.theme);
+      setCategory(stmt.category);
+    } else {
+      setProblemTitle('');
+      setTheme('');
+      setCategory('');
+    }
   };
 
   const handleProblemTitleChange = (e) => {
     const title = e.target.value;
     setProblemTitle(title);
     const stmt = STATEMENTS.find(s => s.title === title);
-    if (stmt) setProblemCode(stmt.id);
-    else setProblemCode('');
+    if (stmt) {
+      setProblemCode(stmt.id);
+      setTheme(stmt.theme);
+      setCategory(stmt.category);
+    } else {
+      setProblemCode('');
+      setTheme('');
+      setCategory('');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
-    if (!problemCode || !problemTitle || !uniqueIdea || !ideaDesc) {
-      setSubmitError('Please fill in all fields.');
+    if (!problemCode || !problemTitle || !theme || !category || !ideaTitle || !uniqueIdea || !ideaDesc) {
+      setSubmitError('Please fill in all required fields.');
       return;
     }
     setSubmitting(true);
@@ -139,12 +159,17 @@ export default function LeaderDashboard() {
         team_id: teamInfo.teamId,
         problem_code: problemCode,
         problem_statement: problemTitle,
+        theme: theme,
+        category: category,
+        idea_title: ideaTitle,
         unique_idea: uniqueIdea,
-        idea_description: ideaDesc
+        idea_description: ideaDesc,
+        yt_link: ytLink,
+        document_link: documentLink
       };
       
       const { error } = await supabase
-        .from('team_problem_selection')
+        .from('submissions')
         .insert([payload])
         .select();
 
@@ -416,6 +441,7 @@ export default function LeaderDashboard() {
               }}>
                 {submitError && <div style={{ color: '#ff6b6b', background: 'rgba(255,107,107,0.1)', padding: 12, borderRadius: 8, fontFamily: 'Poppins,sans-serif', fontSize: 14 }}>{submitError}</div>}
                 
+                {/* Row 1: Code and Title */}
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 200px' }}>
                     <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Problem Code</label>
@@ -434,12 +460,43 @@ export default function LeaderDashboard() {
                   </div>
                 </div>
 
+                {/* Row 2: Theme and Category (Auto-filled) */}
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Theme</label>
+                    <input type="text" readOnly value={theme} placeholder="Auto-filled" style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', cursor: 'not-allowed', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Category</label>
+                    <input type="text" readOnly value={category} placeholder="Auto-filled" style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', cursor: 'not-allowed', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                {/* Row 3: Idea Title */}
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Idea Title</label>
+                  <input required type="text" value={ideaTitle} onChange={e => setIdeaTitle(e.target.value)} placeholder="Give your idea a catchy title..." style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+
+                {/* Row 4: Links */}
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>YouTube Video Link (Optional)</label>
+                    <input type="url" value={ytLink} onChange={e => setYtLink(e.target.value)} placeholder="https://youtube.com/..." style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Document Drive Link (Optional)</label>
+                    <input type="url" value={documentLink} onChange={e => setDocumentLink(e.target.value)} placeholder="https://drive.google.com/..." style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                {/* Row 5: Text areas */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <label style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>How your idea is unique</label>
                     <span style={{ fontSize: 12, fontFamily: 'Poppins,sans-serif', color: uniqueIdea.length > 1000 ? '#ff6b6b' : 'rgba(255,255,255,0.5)' }}>{uniqueIdea.length} / 1000</span>
                   </div>
-                  <textarea required maxLength={1000} value={uniqueIdea} onChange={e => setUniqueIdea(e.target.value)} style={{ width: '100%', minHeight: 120, padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', resize: 'vertical' }} placeholder="Explain what makes your approach different..." />
+                  <textarea required maxLength={1000} value={uniqueIdea} onChange={e => setUniqueIdea(e.target.value)} style={{ width: '100%', minHeight: 120, padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} placeholder="Explain what makes your approach different..." />
                 </div>
 
                 <div>
@@ -447,7 +504,7 @@ export default function LeaderDashboard() {
                     <label style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Idea Description</label>
                     <span style={{ fontSize: 12, fontFamily: 'Poppins,sans-serif', color: ideaDesc.length > 2000 ? '#ff6b6b' : 'rgba(255,255,255,0.5)' }}>{ideaDesc.length} / 2000</span>
                   </div>
-                  <textarea required maxLength={2000} value={ideaDesc} onChange={e => setIdeaDesc(e.target.value)} style={{ width: '100%', minHeight: 180, padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', resize: 'vertical' }} placeholder="Provide a detailed description of your idea and implementation plan..." />
+                  <textarea required maxLength={2000} value={ideaDesc} onChange={e => setIdeaDesc(e.target.value)} style={{ width: '100%', minHeight: 180, padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} placeholder="Provide a detailed description of your idea and implementation plan..." />
                 </div>
 
                 <button disabled={submitting} type="submit" style={{ background: 'linear-gradient(135deg, #FF9933, #e07800)', color: '#fff', padding: '14px 32px', borderRadius: 30, border: 'none', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 16, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, alignSelf: 'flex-start', boxShadow: '0 8px 24px rgba(255,153,51,0.4)', transition: 'all 0.3s ease' }}>
@@ -475,7 +532,7 @@ export default function LeaderDashboard() {
                  backdropFilter: 'blur(16px)',
                  boxShadow: '0 16px 40px rgba(0,0,0,0.3)'
                }}>
-                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
+                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
                    <div style={{ background: 'rgba(255,153,51,0.2)', color: '#FF9933', padding: '6px 12px', borderRadius: 6, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, fontSize: 14, border: '1px solid rgba(255,153,51,0.3)' }}>
                      {submissionData.problem_code}
                    </div>
@@ -483,20 +540,57 @@ export default function LeaderDashboard() {
                      {submissionData.problem_statement}
                    </h3>
                  </div>
+
+                 {/* Tags */}
+                 <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+                   <span style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontFamily: 'Poppins,sans-serif', border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <strong>Theme:</strong> {submissionData.theme}
+                   </span>
+                   <span style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontFamily: 'Poppins,sans-serif', border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <strong>Category:</strong> {submissionData.category}
+                   </span>
+                 </div>
+                 
+                 <div style={{ marginBottom: 24 }}>
+                   <h4 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Idea Title</h4>
+                   <p style={{ color: '#fff', fontFamily: 'Montserrat,sans-serif', fontSize: 22, fontWeight: 800, margin: 0 }}>
+                     {submissionData.idea_title}
+                   </p>
+                 </div>
                  
                  <div style={{ marginBottom: 24 }}>
                    <h4 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Unique Idea</h4>
-                   <p style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Poppins,sans-serif', fontSize: 15, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                   <p style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Poppins,sans-serif', fontSize: 15, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.2)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
                      {submissionData.unique_idea}
                    </p>
                  </div>
                  
-                 <div>
+                 <div style={{ marginBottom: 24 }}>
                    <h4 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Idea Description</h4>
-                   <p style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Poppins,sans-serif', fontSize: 15, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                   <p style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'Poppins,sans-serif', fontSize: 15, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.2)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
                      {submissionData.idea_description}
                    </p>
                  </div>
+
+                 {/* Links Section */}
+                 {(submissionData.yt_link || submissionData.document_link) && (
+                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                     {submissionData.yt_link && (
+                       <a href={submissionData.yt_link} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff', textDecoration: 'none', background: 'rgba(231, 76, 60, 0.15)', padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(231, 76, 60, 0.3)', fontFamily: 'Poppins,sans-serif', fontSize: 14, fontWeight: 600, transition: 'all 0.2s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.25)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.15)'}>
+                         📺 YouTube Video
+                       </a>
+                     )}
+                     {submissionData.document_link && (
+                       <a href={submissionData.document_link} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff', textDecoration: 'none', background: 'rgba(52, 152, 219, 0.15)', padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(52, 152, 219, 0.3)', fontFamily: 'Poppins,sans-serif', fontSize: 14, fontWeight: 600, transition: 'all 0.2s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(52, 152, 219, 0.25)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(52, 152, 219, 0.15)'}>
+                         📄 Drive Document
+                       </a>
+                     )}
+                   </div>
+                 )}
                </div>
             ) : (
               <div style={{ 
