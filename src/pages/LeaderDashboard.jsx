@@ -58,6 +58,7 @@ export default function LeaderDashboard() {
   // Submission form state
   const [submissionStatus, setSubmissionStatus] = useState('loading'); // 'loading', 'none', 'submitted'
   const [submissionData, setSubmissionData] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
   const [problemCode, setProblemCode] = useState('');
   const [problemTitle, setProblemTitle] = useState('');
   const [theme, setTheme] = useState('');
@@ -72,6 +73,33 @@ export default function LeaderDashboard() {
   const [submitError, setSubmitError] = useState('');
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const targetDate = new Date('2026-07-22T00:00:00+05:30').getTime();
+    
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+      
+      if (difference > 0) {
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        };
+      }
+      return null; // Timer finished
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     async function fetchTeamData() {
@@ -422,7 +450,37 @@ export default function LeaderDashboard() {
                   Your team has already submitted a problem statement. You can view it in the Review tab.
                 </p>
               </div>
+            ) : timeLeft ? (
+              <div style={{ 
+                padding: '60px 20px', 
+                textAlign: 'center', 
+                background: 'rgba(255,255,255,0.02)', 
+                borderRadius: 20, 
+                border: '2px dashed rgba(255,153,51,0.25)',
+                backdropFilter: 'blur(16px)'
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+                <h3 style={{ margin: '0 0 12px', color: '#fff', fontFamily: 'Montserrat,sans-serif', fontSize: 24, fontWeight: 700 }}>
+                  Submissions Open Soon
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Poppins,sans-serif', margin: '0 auto 30px', fontSize: 16, maxWidth: 500 }}>
+                  PPT submissions will begin on 22nd July 2026. Get your ideas ready!
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+                  {Object.entries(timeLeft).map(([unit, value]) => (
+                    <div key={unit} style={{ background: 'rgba(0,0,0,0.3)', padding: '15px 20px', borderRadius: 12, minWidth: 80, border: '1px solid rgba(255,153,51,0.2)' }}>
+                      <div style={{ color: '#FF9933', fontSize: 32, fontWeight: 800, fontFamily: 'Montserrat,sans-serif' }}>
+                        {value.toString().padStart(2, '0')}
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginTop: 4, fontFamily: 'Poppins,sans-serif' }}>
+                        {unit}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
+              {/*
               <form onSubmit={handleSubmit} style={{ 
                 display: 'flex', flexDirection: 'column', gap: 24,
                 background: 'rgba(255, 255, 255, 0.03)',
@@ -434,7 +492,7 @@ export default function LeaderDashboard() {
               }}>
                 {submitError && <div style={{ color: '#ff6b6b', background: 'rgba(255,107,107,0.1)', padding: 12, borderRadius: 8, fontFamily: 'Poppins,sans-serif', fontSize: 14 }}>{submitError}</div>}
                 
-                {/* Row 1: Code and Title */}
+                {/* Row 1: Code and Title *\/}
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 200px' }}>
                     <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Problem Code</label>
@@ -453,7 +511,7 @@ export default function LeaderDashboard() {
                   </div>
                 </div>
 
-                {/* Row 2: Theme and Category (Auto-filled) */}
+                {/* Row 2: Theme and Category (Auto-filled) *\/}
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 200px' }}>
                     <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Theme</label>
@@ -465,13 +523,13 @@ export default function LeaderDashboard() {
                   </div>
                 </div>
 
-                {/* Row 3: Idea Title */}
+                {/* Row 3: Idea Title *\/}
                 <div>
                   <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>Idea Title</label>
                   <input required type="text" value={ideaTitle} onChange={e => setIdeaTitle(e.target.value)} placeholder="Give your idea a catchy title..." style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontFamily: 'Poppins,sans-serif', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
-                {/* Row 4: Links */}
+                {/* Row 4: Links *\/}
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 200px' }}>
                     <label style={{ display: 'block', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 8 }}>YouTube Video Link (Optional)</label>
@@ -483,7 +541,7 @@ export default function LeaderDashboard() {
                   </div>
                 </div>
 
-                {/* Row 5: Text areas */}
+                {/* Row 5: Text areas *\/}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <label style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>How your idea is unique</label>
@@ -504,6 +562,7 @@ export default function LeaderDashboard() {
                   {submitting ? 'Submitting...' : 'Submit Idea'}
                 </button>
               </form>
+              */}
             )}
           </div>
         )}

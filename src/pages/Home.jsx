@@ -351,7 +351,7 @@ function NewsTicker() {
             <span style={{ color: 'rgba(255,255,255,0.82)', fontFamily: 'Montserrat,sans-serif', fontSize: 13, fontWeight: 500 }}>
               &nbsp;&nbsp;&nbsp;SVH 2026 by Blockchain Club, VIT Bhopal — Inspired by Smart India Hackathon &nbsp;·&nbsp;
               Registration: <strong style={{ color: '#FF9933' }}>1–25 July 2026</strong> &nbsp;·&nbsp;
-              PPT Submission: <strong style={{ color: '#FF9933' }}>20 July – 5 Aug 2026</strong> &nbsp;·&nbsp;
+              PPT Submission: <strong style={{ color: '#FF9933' }}>22 July – 5 Aug 2026</strong> &nbsp;·&nbsp;
               Team: <strong style={{ color: '#FF9933' }}>6 Members (Min. 1 Female)</strong> &nbsp;·&nbsp;
               Fee: <strong style={{ color: '#FF9933' }}>₹75/Member · ₹450/Team</strong> &nbsp;·&nbsp;
               Grand Finale: <strong style={{ color: '#138808' }}>24–25 Aug 2026 (Tentative)</strong> &nbsp;·&nbsp;
@@ -373,7 +373,7 @@ function NewsTicker() {
 const rounds = [
   {
     num: 1, label: 'ROUND 1', title: 'PPT Submission', subtitle: 'Online Evaluation Phase',
-    date: '20 July – 5 Aug 2026', color: '#FF9933', borderColor: 'rgba(255,153,51,0.25)',
+    date: '22 July – 5 Aug 2026', color: '#FF9933', borderColor: 'rgba(255,153,51,0.25)',
     bgAccent: 'rgba(255,153,51,0.05)', icon: '📊',
     description: 'Teams select up to 2 problem statements and submit a comprehensive presentation covering problem understanding, proposed solution, technical architecture, expected real-world impact, and step-by-step implementation roadmap.',
     what: [
@@ -656,7 +656,7 @@ function AboutSection() {
    ═══════════════════════════════════════════════ */
 const timelinePhases = [
   { num: 1, title: 'Registration', date: '1 – 25 July 2026', desc: 'Teams of 6 register online. Minimum 1 female member mandatory. Fee: ₹75/member (₹450/team). Register through the official Google Form.', icon: '✍️', color: '#FF9933' },
-  { num: 2, title: 'PPT Submission', date: '20 July – 5 Aug 2026', desc: 'Submit a comprehensive presentation covering problem understanding, proposed solution, technical architecture, expected impact & implementation roadmap.', icon: '📊', color: '#138808' },
+  { num: 2, title: 'PPT Submission', date: '22 July – 5 Aug 2026', desc: 'Submit a comprehensive presentation covering problem understanding, proposed solution, technical architecture, expected impact & implementation roadmap.', icon: '📊', color: '#138808' },
   { num: 3, title: 'PPT Evaluation', date: '5 – 10 Aug 2026', desc: 'Internal panel evaluates all submissions. Top 5 teams per problem statement shortlisted. Max 60 finalist teams across all 12 PSs.', icon: '⚖️', color: '#06038D' },
   { num: 4, title: 'Results', date: 'Post 10 Aug 2026', desc: 'Shortlisted finalist teams officially announced. Teams notified through internal college channels and official platforms.', icon: '📢', color: '#FF9933' },
   { num: 5, title: 'Grand Finale', date: '24 – 25 Aug 2026', desc: 'Finalists build a functional prototype at VIT Bhopal. 2-day, 12-hr offline format. Subject to OD approval from the institute.', icon: '🚀', color: '#138808' },
@@ -996,7 +996,7 @@ function RegistrationCTA() {
               Registration is active until <strong style={{ color: '#FF9933' }}>25 July 2026</strong>. Form your team of 6 (minimum 1 female member) and secure your slot strictly via the Google Form.
             </p>
             <div style={{ background: 'rgba(255,153,51,0.08)', border: '1px solid rgba(255,153,51,0.25)', borderRadius: 8, padding: '16px 20px', marginBottom: 30, color: '#fff', fontSize: 14, fontFamily: 'Poppins,sans-serif', display: 'inline-block', maxWidth: 620 }}>
-              ⚠️ <strong style={{ color: '#FF9933' }}>Notice:</strong> Form registrations are managed on Google Forms. Registration is NOT hosted on this website. The portal here is used exclusively for Round 1 PPT uploads beginning 20th July.
+              ⚠️ <strong style={{ color: '#FF9933' }}>Notice:</strong> Form registrations are managed on Google Forms. Registration is NOT hosted on this website. The portal here is used exclusively for Round 1 PPT uploads beginning 22nd July.
             </div>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
               <a href="https://forms.gle/zYNYkjygKYfbAjhy6" target="_blank" rel="noopener noreferrer" style={{ padding: '14px 40px', background: 'linear-gradient(135deg, #FF9933, #e07800)', color: '#fff', borderRadius: 8, fontSize: 13, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.5, boxShadow: '0 6px 24px rgba(255,153,51,0.4)', transition: 'all 0.25s', display: 'inline-block' }}
