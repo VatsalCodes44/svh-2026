@@ -14,7 +14,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
 import EvaluatorDashboard from './pages/EvaluatorDashboard';
-import SuperEvaluatorDashboard from './pages/SuperEvaluatorDashboard';
+import SuperEvaluatorDashboard from './pages/AdminDashboard';
 import TestEmail from './pages/TestEmail';
 import ComingSoon from './pages/ComingSoon';
 
@@ -104,18 +104,18 @@ function AppContent() {
 
       <main style={{ flex: 1, paddingTop: isDashboard ? 0 : 90 }}>
         <Routes>
-          <Route path="/"                   element={<Home />} />
-          <Route path="/guidelines"         element={<Guidelines />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/guidelines" element={<Guidelines />} />
           <Route path="/problem-statements" element={<ProblemStatements />} />
-          <Route path="/faq"                element={<FAQ />} />
-          <Route path="/contact"            element={<ContactUs />} />
-          <Route path="/login"              element={<Login />} />
-          <Route path="/dashboard"          element={<Dashboard />} />
-          <Route path="/leader-dashboard"   element={<LeaderDashboard />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/leader-dashboard" element={<LeaderDashboard />} />
           <Route path="/evaluator-dashboard" element={<EvaluatorDashboard />} />
           <Route path="/super-admin-dashboard" element={<SuperEvaluatorDashboard />} />
-          <Route path="/test-email"         element={<TestEmail />} />
-          <Route path="/coming-soon"        element={<ComingSoon />} />
+          <Route path="/test-email" element={<TestEmail />} />
+          <Route path="/coming-soon" element={<ComingSoon />} />
         </Routes>
       </main>
       {!isDashboard && <Footer />}

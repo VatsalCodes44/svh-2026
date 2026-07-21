@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 import blockchainLogo from '../assets/Blockchain.png';
 import iicLogo from '../assets/IIC Logo.png';
@@ -238,7 +239,7 @@ function HeroSection() {
 
         {/* Tagline */}
         <p style={{ ...a(380), color: 'rgba(255,255,255,0.72)', fontSize: 'clamp(14px, 2vw, 18px)', fontFamily: 'Poppins,sans-serif', lineHeight: 1.7, maxWidth: 680, margin: '0 auto 36px' }}>
-          India's most ambitious internal hackathon — inspired by Smart India Hackathon.{' '}
+
           <strong style={{ color: '#fff' }}>Innovate. Build. Represent.</strong>
         </p>
 
@@ -364,6 +365,84 @@ function NewsTicker() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   LIVE STATS
+   ═══════════════════════════════════════════════ */
+function LiveStatsSection() {
+  const [ref, visible] = useInView(0.1);
+  const [stats, setStats] = useState({ teams: 0, participants: 0, male: 0, female: 0, submissions: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const { data: teams } = await supabase.from('teams').select('id');
+        const { data: profiles } = await supabase.from('profiles').select('gender');
+        const { data: subs } = await supabase.from('submissions').select('id');
+
+        const totalTeams = teams?.length || 0;
+        const genders = profiles || [];
+        const male = genders.filter(p => p.gender === 'Male').length;
+        const female = genders.filter(p => p.gender === 'Female').length;
+
+        setStats({
+          teams: totalTeams,
+          participants: genders.length,
+          male,
+          female,
+          submissions: subs?.length || 0,
+        });
+      } catch (err) {
+        console.error('Error fetching live stats:', err);
+      }
+      setLoading(false);
+    }
+    fetchStats();
+  }, []);
+
+  const items = [
+    { label: 'Teams Registered', value: stats.teams, icon: '🏆', color: '#FF9933', sub: 'Competing teams' },
+    { label: 'Total Participants', value: stats.participants, icon: '👥', color: '#138808', sub: 'Across all teams' },
+    { label: 'Male Participants', value: stats.male, icon: '👨‍💻', color: '#06038D', sub: 'Team members' },
+    { label: 'Female Participants', value: stats.female, icon: '👩‍💻', color: '#FF9933', sub: 'Team members' },
+    { label: 'Ideas Submitted', value: stats.submissions, icon: '💡', color: '#138808', sub: 'Round 1 submissions' },
+  ];
+
+  return (
+    <section ref={ref} style={{ background: 'linear-gradient(180deg, #07192c 0%, #0f2942 100%)', padding: '52px 20px', borderTop: '1px solid rgba(255,153,51,0.15)' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32, opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(16px)', transition: 'all 0.55s ease' }}>
+          <span style={{ display: 'inline-block', padding: '3px 14px', background: 'rgba(255,153,51,0.12)', border: '1px solid rgba(255,153,51,0.3)', borderRadius: 20, color: '#FF9933', fontSize: 10, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 10 }}>
+            Live Numbers
+          </span>
+          <h2 style={{ fontFamily: 'Montserrat,sans-serif', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 900, color: '#fff', margin: 0 }}>
+            SVH 2026 — {' '}<span style={{ color: '#FF9933' }}>Event Stats</span>
+          </h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+          {items.map((item, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.04)', border: `1px solid ${item.color}25`,
+              borderRadius: 16, padding: '22px 18px', textAlign: 'center',
+              opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(24px)',
+              transition: `all 0.5s ease ${i * 0.07}s`,
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = `${item.color}55`; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = `${item.color}25`; e.currentTarget.style.transform = visible ? 'none' : 'translateY(24px)'; }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>{item.icon}</div>
+              <div style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: item.color, fontSize: loading ? 20 : 'clamp(26px,4vw,36px)', lineHeight: 1 }}>
+                {loading ? '—' : item.value.toLocaleString()}
+              </div>
+              <div style={{ color: '#fff', fontFamily: 'Montserrat,sans-serif', fontWeight: 700, fontSize: 12, marginTop: 6 }}>{item.label}</div>
+              <div style={{ color: 'rgba(255,255,255,0.38)', fontFamily: 'Poppins,sans-serif', fontSize: 10.5, marginTop: 3 }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1037,6 +1116,75 @@ function RegistrationCTA() {
 }
 
 /* ═══════════════════════════════════════════════
+   MENTOR CONNECT SECTION
+   ═══════════════════════════════════════════════ */
+function MentorConnectSection() {
+  const [ref, visible] = useInView(0.08);
+  return (
+    <section ref={ref} id="mentor-connect" style={{ background: '#fff', padding: '90px 20px', borderBottom: '1px solid #f0f0f0' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)', transition: 'all 0.6s ease' }}>
+          <SectionHeading badge="Exclusive Session" title="Mentor Connect" highlight="Sessions" />
+        </div>
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 40, alignItems: 'center',
+          opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(24px)',
+          transition: 'all 0.65s ease 0.15s',
+        }}>
+          {/* Poster Image */}
+          <div style={{
+            borderRadius: 20, overflow: 'hidden',
+            boxShadow: '0 16px 40px rgba(0,0,0,0.12)', border: '2px solid rgba(255,153,51,0.2)',
+            transition: 'transform 0.3s ease, boxShadow 0.3s ease',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 24px 50px rgba(255,153,51,0.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.12)'; }}>
+            <img src="/img/mentor-connect.png" alt="SVH 2026 Mentor Connect Poster" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          </div>
+
+          {/* Details */}
+          <div>
+            <span style={{ display: 'inline-block', padding: '4px 16px', background: 'rgba(255,153,51,0.12)', color: '#FF9933', fontSize: 11, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', borderRadius: 20, marginBottom: 16, border: '1px solid rgba(255,153,51,0.25)' }}>
+              For Registered Teams
+            </span>
+            <h3 style={{ fontFamily: 'Montserrat,sans-serif', fontSize: 'clamp(22px,3.5vw,32px)', fontWeight: 900, color: '#0f2942', margin: '0 0 16px', lineHeight: 1.15 }}>
+              Learn from <span style={{ color: '#FF9933' }}>SIH Winners</span> & Industry Experts
+            </h3>
+            <p style={{ color: '#555', fontSize: 15, fontFamily: 'Poppins,sans-serif', lineHeight: 1.8, marginBottom: 20, textAlign: 'justify' }}>
+              The Blockchain Club is conducting exclusive <strong>Mentor Connect Sessions</strong> for <strong>SVH 2026</strong> participants. Get direct guidance on problem statement selection, PPT design, technical architecture, and pitching strategies.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 28 }}>
+              {[
+                { icon: '💡', text: 'Exclusive sessions available only for registered SVH 2026 teams.' },
+                { icon: '📌', text: 'Mentor lists and session links shared directly via team email.' },
+                { icon: '🏆', text: 'Direct guidance from national SIH finalists & domain leaders.' },
+              ].map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,153,51,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0, border: '1px solid rgba(255,153,51,0.25)' }}>
+                    {item.icon}
+                  </div>
+                  <span style={{ color: '#444', fontSize: 13.5, fontFamily: 'Poppins,sans-serif', lineHeight: 1.6, marginTop: 4 }}>{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <a href="https://forms.gle/zYNYkjygKYfbAjhy6" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 28px', background: 'linear-gradient(135deg, #FF9933, #e07800)', color: '#fff', borderRadius: 8, fontSize: 12.5, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.2, boxShadow: '0 4px 16px rgba(255,153,51,0.35)', transition: 'all 0.25s' }}>
+                🔥 Register Now
+              </a>
+              <a href="https://chat.whatsapp.com/L7lXF9VZQRDCx0aXXwBhGw?s=sw&p=a&mlu=2" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 28px', background: '#16a34a', color: '#fff', borderRadius: 8, fontSize: 12.5, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.2, boxShadow: '0 4px 16px rgba(22,163,74,0.35)', transition: 'all 0.25s' }}>
+                💬 Join WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════
    ORIENTATION POPUP MODAL
    ═══════════════════════════════════════════════ */
 function OrientationModal() {
@@ -1051,43 +1199,45 @@ function OrientationModal() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'rgba(7, 25, 44, 0.4)',
-      backdropFilter: 'blur(3px)',
-      padding: 20
+      background: 'rgba(7, 25, 44, 0.65)',
+      backdropFilter: 'blur(5px)',
+      padding: 16
     }}>
       {/* Backdrop close area */}
-      <div 
-        onClick={() => setIsOpen(false)} 
-        style={{ position: 'absolute', inset: 0, cursor: 'pointer' }} 
+      <div
+        onClick={() => setIsOpen(false)}
+        style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}
       />
 
       {/* Modal Container */}
       <div style={{
         position: 'relative',
         width: '100%',
-        maxWidth: 580,
+        maxWidth: 620,
         background: 'linear-gradient(135deg, #FF9933 0%, #138808 100%)',
         borderRadius: 24,
-        padding: 2, // Border effect
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 153, 51, 0.15)',
+        padding: 2,
+        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 153, 51, 0.2)',
         zIndex: 10,
+        maxHeight: '90vh',
+        overflowY: 'auto',
         animation: 'pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
       }}>
         <div style={{
           background: 'rgba(7, 25, 44, 0.98)',
           borderRadius: 22,
-          padding: '36px 32px',
+          padding: '28px 24px',
           position: 'relative',
         }}>
           {/* Close button */}
-          <button 
-            onClick={() => setIsOpen(false)} 
+          <button
+            onClick={() => setIsOpen(false)}
             style={{
               position: 'absolute',
-              top: 18,
-              right: 18,
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              top: 14,
+              right: 14,
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               width: 32,
               height: 32,
               borderRadius: '50%',
@@ -1101,11 +1251,11 @@ function OrientationModal() {
               zIndex: 12
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
               e.currentTarget.style.transform = 'scale(1.1)';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
               e.currentTarget.style.transform = 'none';
             }}
           >
@@ -1121,11 +1271,11 @@ function OrientationModal() {
             border: '1px solid rgba(255, 153, 51, 0.35)',
             borderRadius: 20,
             padding: '4px 14px',
-            marginBottom: 20
+            marginBottom: 16
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF9933', display: 'inline-block' }} />
             <span style={{ color: '#FF9933', fontSize: 10, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-              Important Update
+              Important Notice
             </span>
           </div>
 
@@ -1138,93 +1288,56 @@ function OrientationModal() {
             margin: '0 0 10px',
             letterSpacing: -0.5
           }}>
-            Attention SVH 2026 Participants!
+            Registration Deadline Extended!
           </h3>
 
-          {/* Subtitle */}
           <p style={{
-            color: '#FF9933',
-            fontSize: 15,
+            color: 'rgba(255, 255, 255, 0.88)',
+            fontSize: 14,
             fontFamily: 'Poppins,sans-serif',
-            fontWeight: 600,
-            margin: '0 0 24px'
-          }}>
-            📢 Mentor Connect Sessions Announcement
-          </p>
-
-          {/* Description Details */}
-          <div style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            paddingTop: 20,
-            marginBottom: 28,
+            lineHeight: 1.65,
+            margin: '0 0 16px',
             textAlign: 'left'
           }}>
-            <p style={{
-              color: 'rgba(255, 255, 255, 0.95)',
-              fontSize: 14,
-              fontFamily: 'Poppins,sans-serif',
-              lineHeight: 1.65,
-              margin: '0 0 16px'
-            }}>
-              The Blockchain Club is excited to announce the upcoming <strong>Mentor Connect Sessions</strong> for <strong>SVH 2026</strong>!
-            </p>
+            📢 Great news for all aspiring teams! Registrations for <strong>SVH 2026</strong> have been extended until <strong style={{ color: '#FF9933' }}>25th July 2026</strong>.
+          </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 16 }}>💡</span>
-                <span style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 13.5, fontFamily: 'Poppins,sans-serif', lineHeight: 1.5 }}>
-                  These exclusive mentoring sessions are available <strong>only for registered SVH 2026 teams</strong>.
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 16 }}>📌</span>
-                <span style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 13.5, fontFamily: 'Poppins,sans-serif', lineHeight: 1.5 }}>
-                  Detailed information about the mentors and session schedule will be shared with registered teams via email.
-                </span>
-              </div>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 12,
+            padding: '14px 18px',
+            marginBottom: 20,
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10
+          }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 13, color: '#fff', fontFamily: 'Poppins,sans-serif' }}>
+              <span>✍️</span>
+              <span>Registration Deadline: <strong style={{ color: '#FF9933' }}>25th July 2026</strong></span>
             </div>
-
-            <p style={{
-              color: 'rgba(255, 255, 255, 0.75)',
-              fontSize: 13.5,
-              fontFamily: 'Poppins,sans-serif',
-              lineHeight: 1.6,
-              margin: '0 0 20px',
-              fontStyle: 'italic'
-            }}>
-              This is your opportunity to learn directly from those who have successfully navigated the SIH journey and emerged as winners.
-            </p>
-
-            <div style={{
-              background: 'rgba(255, 153, 51, 0.1)',
-              border: '1.5px solid rgba(255, 153, 51, 0.3)',
-              borderRadius: 12,
-              padding: '12px 18px',
-              textAlign: 'center',
-              color: '#fff',
-              fontFamily: 'Montserrat,sans-serif',
-              fontWeight: 800,
-              fontSize: 14
-            }}>
-              ⏳ Registrations are extended till 25th July!
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 13, color: '#fff', fontFamily: 'Poppins,sans-serif' }}>
+              <span>📊</span>
+              <span>Presentation PPT Submission Deadline: <strong style={{ color: '#4ade80' }}>5th August 2026</strong></span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <a 
-              href="https://forms.gle/zYNYkjygKYfbAjhy6" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://forms.gle/zYNYkjygKYfbAjhy6"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '12px 24px',
+                padding: '11px 22px',
                 background: 'linear-gradient(135deg, #FF9933 0%, #e07800 100%)',
                 color: '#fff',
                 borderRadius: 8,
-                fontSize: 12.5,
+                fontSize: 12,
                 fontFamily: 'Montserrat,sans-serif',
                 fontWeight: 800,
                 textDecoration: 'none',
@@ -1244,10 +1357,10 @@ function OrientationModal() {
               🔥 Register Now
             </a>
 
-            <a 
-              href="https://chat.whatsapp.com/L7lXF9VZQRDCx0aXXwBhGw?s=sw&p=a&mlu=2" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://chat.whatsapp.com/L7lXF9VZQRDCx0aXXwBhGw?s=sw&p=a&mlu=2"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1291,6 +1404,8 @@ export default function Home() {
       <OrientationModal />
       <HeroSection />
       <NewsTicker />
+      <LiveStatsSection />
+      <MentorConnectSection />
       <EventRoundsCarousel />
       <AboutSection />
       <TimelineSection />

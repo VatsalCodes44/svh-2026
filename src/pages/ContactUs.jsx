@@ -230,83 +230,121 @@ export default function ContactUs() {
                 Reach us through any of the following official contacts for SVH 2026 queries.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <ContactRow
-  icon="📧"
-  label="Email Address"
-  value="blockchainclub@vitbhopal.ac.in"
-  link="mailto:blockchainclub@vitbhopal.ac.in"
-  color="#FF9933"
-  delay={0.1}
-  visible={leftVisible}
-/>
+                <ContactRow icon="📧" label="Email Address" value="blockchainclub@vitbhopal.ac.in" link="mailto:blockchainclub@vitbhopal.ac.in" color="#FF9933" delay={0.1} visible={leftVisible} />
+                <ContactRow icon="💬" label="WhatsApp Group" value="Join Official SVH WhatsApp Group" link="https://chat.whatsapp.com/L7lXF9VZQRDCx0aXXwBhGw?s=sw&p=a&mlu=2" color="#25D366" delay={0.15} visible={leftVisible} />
+                <ContactRow icon="📍" label="Location" value={<>VIT Bhopal University, Kothri Kalan,<br />Sehore, Madhya Pradesh – 466114</>} color="#138808" delay={0.2} visible={leftVisible} />
+                <ContactRow icon="👨‍🏫" label="Faculty Coordinator" value={<><strong style={{ display: 'block' }}>Dr. Hemraj Lamkuche</strong><span style={{ fontSize: 12, color: '#aaa' }}>Blockchain Club · VIT Bhopal University</span></>} color="#06038D" delay={0.3} visible={leftVisible} />
+              </div>
 
-<ContactRow
-  icon="💬"
-  label="WhatsApp Group"
-  value="Join Official SVH WhatsApp Group"
-  link="https://chat.whatsapp.com/L7lXF9VZQRDCx0aXXwBhGw?s=sw&p=a&mlu=2"
-  color="#25D366"
-  delay={0.15}
-  visible={leftVisible}
-/>
+              {/* Team Contacts */}
+              <div style={{ marginTop: 24 }}>
+                <h3 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 800, color: '#0f2942', fontSize: 14, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 4, height: 16, background: '#138808', borderRadius: 2, display: 'inline-block' }} />
+                  General Queries — Contact
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { name: 'Ayush Tiwari', phone: '8962301907', email: 'ayush.24mei10025@vitbhopal.ac.in' },
+                    { name: 'Dhairya Gothi', phone: '9424065768', email: 'dhairya.23bce10225@vitbhopal.ac.in' },
+                    { name: 'Mrityunjay Singh', phone: '9555410587', email: 'mrityunjay.23bce10008@vitbhopal.ac.in' },
+                  ].map((c, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(19,136,8,0.04)', border: '1px solid rgba(19,136,8,0.15)', borderRadius: 10, flexWrap: 'wrap', gap: 8 }}>
+                      <div>
+                        <div style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, color: '#0f2942', fontSize: 13 }}>{c.name}</div>
+                        <div style={{ fontFamily: 'Poppins,sans-serif', color: '#666', fontSize: 11.5 }}>{c.email}</div>
+                      </div>
+                      <a href={`https://wa.me/91${c.phone}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: '#25D36615', border: '1px solid #25D36640', borderRadius: 20, color: '#16a34a', fontSize: 12, textDecoration: 'none', fontWeight: 700, fontFamily: 'Montserrat,sans-serif', whiteSpace: 'nowrap' }}>
+                        💬 {c.phone}
+                      </a>
+                    </div>
+                  ))}
+                </div>
 
-<ContactRow
-  icon="📍"
-  label="Location"
-  value={
-    <>
-      VIT Bhopal University, Kothri Kalan,
-      <br />
-      Sehore, Madhya Pradesh – 466114
-    </>
-  }
-  color="#138808"
-  delay={0.2}
-  visible={leftVisible}
-/>
-
-<ContactRow
-  icon="👨‍🏫"
-  label="Faculty Coordinator"
-  value={
-    <>
-      <strong style={{ display: 'block' }}>Dr. Hemraj Lamkuche</strong>
-      <span style={{ fontSize: 12, color: '#aaa' }}>
-        Blockchain Club · VIT Bhopal University
-      </span>
-    </>
-  }
-  color="#06038D"
-  delay={0.3}
-  visible={leftVisible}
-/>
+                <h3 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 800, color: '#0f2942', fontSize: 14, marginBottom: 14, marginTop: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 4, height: 16, background: '#FF9933', borderRadius: 2, display: 'inline-block' }} />
+                  Technical Queries — Contact
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { name: 'Abhilash', phone: '9511454951', email: null },
+                    { name: 'Soumya', phone: '9332404107', email: null },
+                    { name: 'Dhairya Gothi', phone: '9424065768', email: 'dhairya.23bce10225@vitbhopal.ac.in' },
+                  ].map((c, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(255,153,51,0.04)', border: '1px solid rgba(255,153,51,0.15)', borderRadius: 10, flexWrap: 'wrap', gap: 8 }}>
+                      <div>
+                        <div style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 700, color: '#0f2942', fontSize: 13 }}>{c.name}</div>
+                        {c.email && <div style={{ fontFamily: 'Poppins,sans-serif', color: '#666', fontSize: 11.5 }}>{c.email}</div>}
+                      </div>
+                      <a href={`https://wa.me/91${c.phone}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: '#25D36615', border: '1px solid #25D36640', borderRadius: 20, color: '#16a34a', fontSize: 12, textDecoration: 'none', fontWeight: 700, fontFamily: 'Montserrat,sans-serif', whiteSpace: 'nowrap' }}>
+                        💬 {c.phone}
+                      </a>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right: Social Media */}
+          {/* Right: Social Media & Community */}
           <div ref={rightRef}>
             <div style={{
-              background: 'linear-gradient(135deg, #0f2942 0%, #07192c 100%)',
-              borderRadius: 20, padding: '32px',
-              border: '1.5px solid rgba(255,153,51,0.18)',
+              background: 'linear-gradient(145deg, #0f2942 0%, #07192c 60%, #04101e 100%)',
+              borderRadius: 24, padding: '36px 32px',
+              border: '1.5px solid rgba(255,153,51,0.22)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
               height: '100%',
+              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
             }}>
-              <h2 style={{
-                fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#FF9933',
-                fontSize: 'clamp(18px,2.5vw,22px)', marginBottom: 8,
-                display: 'flex', alignItems: 'center', gap: 10,
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', background: 'rgba(255,153,51,0.12)', border: '1px solid rgba(255,153,51,0.3)', borderRadius: 20, color: '#FF9933', fontSize: 10, fontFamily: 'Montserrat,sans-serif', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14 }}>
+                  <span>🌐</span> Social Networks & Community
+                </div>
+                <h2 style={{
+                  fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff',
+                  fontSize: 'clamp(20px,2.8vw,26px)', marginBottom: 10,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{ width: 4, height: 24, background: '#FF9933', borderRadius: 2, display: 'inline-block' }} />
+                  Connect With <span style={{ color: '#FF9933' }}>Blockchain Club</span>
+                </h2>
+                <p style={{ fontFamily: 'Poppins,sans-serif', color: 'rgba(255,255,255,0.65)', fontSize: 13.5, lineHeight: 1.7, marginBottom: 26 }}>
+                  Stay connected for live hackathon announcements, Mentor Connect sessions, submission guidelines, and official results.
+                </p>
+
+                {/* Social Channels List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 28 }}>
+                  {socials.map((soc, i) => (
+                    <SocialCard key={i} {...soc} index={i} visible={rightVisible} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Community Banner inside Right Card */}
+              <div style={{
+                background: 'rgba(255, 153, 51, 0.08)',
+                border: '1.5px dashed rgba(255, 153, 51, 0.3)',
+                borderRadius: 16, padding: '20px 22px',
+                marginTop: 10,
               }}>
-                <span style={{ width: 4, height: 22, background: '#FF9933', borderRadius: 2, display: 'inline-block' }} />
-                Follow Our Club
-              </h2>
-              <p style={{ fontFamily: 'Poppins,sans-serif', color: 'rgba(255,255,255,0.5)', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
-                Stay updated with real-time announcements, session schedules, resources, and event updates.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {socials.map((soc, i) => (
-                  <SocialCard key={i} {...soc} index={i} visible={rightVisible} />
-                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 22 }}>🚀</span>
+                  <div style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 800, color: '#FF9933', fontSize: 14 }}>
+                    Official Participant Community
+                  </div>
+                </div>
+                <p style={{ fontFamily: 'Poppins,sans-serif', color: 'rgba(255,255,255,0.72)', fontSize: 12.5, lineHeight: 1.6, margin: '0 0 14px' }}>
+                  Have quick technical questions or looking for team updates? Join 500+ student innovators in our official WhatsApp group.
+                </p>
+                <a href="https://chat.whatsapp.com/L7lXF9VZQRDCx0aXXwBhGw?s=sw&p=a&mlu=2" target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 20px', background: '#25D366',
+                    color: '#fff', borderRadius: 8, fontFamily: 'Montserrat,sans-serif',
+                    fontWeight: 800, fontSize: 12, textDecoration: 'none', textTransform: 'uppercase',
+                    letterSpacing: 1, boxShadow: '0 4px 16px rgba(37,211,102,0.35)', transition: 'all 0.25s',
+                  }}>
+                  💬 Join WhatsApp Group
+                </a>
               </div>
             </div>
           </div>
