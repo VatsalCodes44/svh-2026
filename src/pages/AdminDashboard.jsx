@@ -55,16 +55,20 @@ export default function AdminDashboard() {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [emailIsHtml, setEmailIsHtml] = useState(true);
-  const [emailToFilter, setEmailToFilter] = useState('leaders'); // 'leaders', 'all_participants', 'evaluators', 'none'
-  const [emailCcFilter, setEmailCcFilter] = useState('none'); // 'none', 'members_non_leaders', 'evaluators'
   const [emailPsFilter, setEmailPsFilter] = useState('ALL');
-  const [manualToEmails, setManualToEmails] = useState('');
-  const [manualCcEmails, setManualCcEmails] = useState('');
+  const [emailToOverride, setEmailToOverride] = useState('blockchainvitb@gmail.com');
+  
+  // BCC Target Checkboxes
+  const [bccTargetLeaders, setBccTargetLeaders] = useState(true);
+  const [bccTargetMembers, setBccTargetMembers] = useState(false);
+  const [bccTargetEvaluators, setBccTargetEvaluators] = useState(false);
+  const [manualBccEmails, setManualBccEmails] = useState('');
+
   const [sendingEmails, setSendingEmails] = useState(false);
   const [emailSendStatus, setEmailSendStatus] = useState(null); // { success: boolean, message: string }
 
-  // Computed Email Lists for To & CC
-  const computedRecipients = useMemo(() => {
+  // Computed BCC Recipients List
+  const computedBccRecipients = useMemo(() => {
     let list = [];
     let targetTeamIds = teams.map(t => t.id);
     if (emailPsFilter !== 'ALL') {
@@ -72,56 +76,28 @@ export default function AdminDashboard() {
       targetTeamIds = Array.from(new Set(psSubs.map(s => s.team_id)));
     }
 
-    if (emailToFilter === 'leaders') {
+    // 1. Team Leaders
+    if (bccTargetLeaders) {
       const activeTeams = teams.filter(t => targetTeamIds.includes(t.id));
       activeTeams.forEach(t => {
         if (t.email && t.email.includes('@')) {
           list.push(t.email.trim());
         }
       });
-    } else if (emailToFilter === 'all_participants') {
-      const targetProfiles = profiles.filter(p => targetTeamIds.includes(p.team_id));
-      targetProfiles.forEach(p => {
-        if (p.email && p.email.includes('@')) {
-          list.push(p.email.trim());
-        }
-      });
-    } else if (emailToFilter === 'evaluators') {
-      evaluators.forEach(e => {
-        if (e.email && e.email.includes('@')) {
-          list.push(e.email.trim());
-        }
-      });
     }
 
-    // Merge manual emails
-    if (manualToEmails.trim()) {
-      const parsed = manualToEmails
-        .split(',')
-        .map(e => e.trim())
-        .filter(e => e && e.includes('@'));
-      list = [...list, ...parsed];
-    }
-
-    return Array.from(new Set(list));
-  }, [teams, profiles, evaluators, submissions, emailToFilter, emailPsFilter, manualToEmails]);
-
-  const computedCcRecipients = useMemo(() => {
-    let list = [];
-    let targetTeamIds = teams.map(t => t.id);
-    if (emailPsFilter !== 'ALL') {
-      const psSubs = submissions.filter(s => s.problem_code === emailPsFilter);
-      targetTeamIds = Array.from(new Set(psSubs.map(s => s.team_id)));
-    }
-
-    if (emailCcFilter === 'members_non_leaders') {
+    // 2. Group Members (Non-leaders)
+    if (bccTargetMembers) {
       const targetProfiles = profiles.filter(p => targetTeamIds.includes(p.team_id) && !p.is_team_leader);
       targetProfiles.forEach(p => {
         if (p.email && p.email.includes('@')) {
           list.push(p.email.trim());
         }
       });
-    } else if (emailCcFilter === 'evaluators') {
+    }
+
+    // 3. Evaluators
+    if (bccTargetEvaluators) {
       evaluators.forEach(e => {
         if (e.email && e.email.includes('@')) {
           list.push(e.email.trim());
@@ -129,9 +105,9 @@ export default function AdminDashboard() {
       });
     }
 
-    // Merge manual CC emails
-    if (manualCcEmails.trim()) {
-      const parsed = manualCcEmails
+    // 4. Merge manual BCC emails
+    if (manualBccEmails.trim()) {
+      const parsed = manualBccEmails
         .split(',')
         .map(e => e.trim())
         .filter(e => e && e.includes('@'));
@@ -139,12 +115,12 @@ export default function AdminDashboard() {
     }
 
     return Array.from(new Set(list));
-  }, [teams, profiles, evaluators, submissions, emailCcFilter, emailPsFilter, manualCcEmails]);
+  }, [teams, profiles, evaluators, submissions, bccTargetLeaders, bccTargetMembers, bccTargetEvaluators, emailPsFilter, manualBccEmails]);
 
   const handleBroadCastEmail = async (e) => {
     e.preventDefault();
-    if (computedRecipients.length === 0) {
-      alert('Recipients list is empty! Please verify your filters or custom emails.');
+    if (computedBccRecipients.length === 0) {
+      alert('BCC Recipients list is empty! Please select at least one group or add manual emails.');
       return;
     }
     if (!emailSubject.trim() || !emailBody.trim()) {
@@ -152,7 +128,7 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to broadcast this email to ${computedRecipients.length} recipients (and ${computedCcRecipients.length} CC)?`)) {
+    if (!window.confirm(`Are you sure you want to broadcast this email to ${computedBccRecipients.length} recipients via BCC?`)) {
       return;
     }
 
@@ -167,8 +143,8 @@ export default function AdminDashboard() {
           subject: emailSubject,
           body: emailBody,
           isHtml: emailIsHtml,
-          recipients: computedRecipients,
-          ccRecipients: computedCcRecipients.length > 0 ? computedCcRecipients : undefined
+          toEmail: emailToOverride,
+          bccRecipients: computedBccRecipients
         })
       });
 
@@ -177,7 +153,7 @@ export default function AdminDashboard() {
         throw new Error(data.message || 'Error occurred while broadcasting emails.');
       }
 
-      setEmailSendStatus({ success: true, message: `Successfully sent email broadcast to ${computedRecipients.length} recipients!` });
+      setEmailSendStatus({ success: true, message: `Successfully sent email broadcast to ${computedBccRecipients.length} recipients!` });
       setEmailSubject('');
       setEmailBody('');
     } catch (err) {
@@ -1824,6 +1800,23 @@ export default function AdminDashboard() {
 
                 <div>
                   <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
+                    Send To (Primary Visible Recipient) *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. blockchainvitb@gmail.com"
+                    value={emailToOverride}
+                    onChange={e => setEmailToOverride(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 13, boxSizing: 'border-box', outline: 'none' }}
+                  />
+                  <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 4 }}>
+                    👥 All other selected groups and manual emails will be BCC'd privately.
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
                     Subject Line *
                   </label>
                   <input
@@ -1890,62 +1883,56 @@ export default function AdminDashboard() {
                     </select>
                   </div>
 
-                  {/* To Filter */}
+                  {/* BCC Targets Checkboxes */}
                   <div>
-                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4 }}>
-                      Send To (Primary Recipients Filter) *
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 6, fontWeight: 600 }}>
+                      BCC Target Groups (Select Multiple)
                     </label>
-                    <select
-                      value={emailToFilter}
-                      onChange={e => setEmailToFilter(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12.5 }}
-                    >
-                      <option value="leaders">Only Team Leaders</option>
-                      <option value="all_participants">All Participants (Leaders + Members)</option>
-                      <option value="evaluators">All Evaluators</option>
-                      <option value="none">None (Manual Input Only)</option>
-                    </select>
-
-                    <div style={{ marginTop: 10 }}>
-                      <label style={{ display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: 10.5, marginBottom: 4 }}>
-                        Or Add Manual Emails (Comma-separated)
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={bccTargetLeaders}
+                          onChange={e => setBccTargetLeaders(e.target.checked)}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15 }}
+                        />
+                        <span>Team Leaders</span>
                       </label>
-                      <textarea
-                        rows="2"
-                        placeholder="e.g. user1@gmail.com, test2@vitbhopal.ac.in..."
-                        value={manualToEmails}
-                        onChange={e => setManualToEmails(e.target.value)}
-                        style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 11.5, boxSizing: 'border-box' }}
-                      />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={bccTargetMembers}
+                          onChange={e => setBccTargetMembers(e.target.checked)}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15 }}
+                        />
+                        <span>Group Members (Non-Leaders)</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={bccTargetEvaluators}
+                          onChange={e => setBccTargetEvaluators(e.target.checked)}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15 }}
+                        />
+                        <span>All Evaluators</span>
+                      </label>
                     </div>
                   </div>
 
-                  {/* CC Filter */}
+                  {/* Manual BCC Inputs */}
                   <div>
-                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4 }}>
-                      Carbon Copy (CC Recipients Filter)
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4, fontWeight: 600 }}>
+                      Additional / Manual BCC Emails
                     </label>
-                    <select
-                      value={emailCcFilter}
-                      onChange={e => setEmailCcFilter(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12.5 }}
-                    >
-                      <option value="none">No Carbon Copy (CC: None)</option>
-                      <option value="members_non_leaders">All Group Members (Non-Leaders)</option>
-                      <option value="evaluators">All Evaluators</option>
-                    </select>
-
-                    <div style={{ marginTop: 10 }}>
-                      <label style={{ display: 'block', color: 'rgba(255,255,255,0.5)', fontSize: 10.5, marginBottom: 4 }}>
-                        Or Add Manual CC Emails (Comma-separated)
-                      </label>
-                      <textarea
-                        rows="2"
-                        placeholder="e.g. cc1@gmail.com, cc2@gmail.com..."
-                        value={manualCcEmails}
-                        onChange={e => setManualCcEmails(e.target.value)}
-                        style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 11.5, boxSizing: 'border-box' }}
-                      />
+                    <textarea
+                      rows="3"
+                      placeholder="Enter emails separated by commas (e.g. test@gmail.com, admin@vitbhopal.ac.in)..."
+                      value={manualBccEmails}
+                      onChange={e => setManualBccEmails(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 12, boxSizing: 'border-box', resize: 'vertical' }}
+                    />
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10.5, marginTop: 4 }}>
+                      🔒 BCC hides recipient addresses from each other for privacy.
                     </div>
                   </div>
                 </div>
@@ -1954,21 +1941,21 @@ export default function AdminDashboard() {
                 <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h4 style={{ margin: 0, color: '#4ade80', fontSize: 13, fontFamily: 'Montserrat,sans-serif' }}>
-                      Primary Recipients List ({computedRecipients.length})
+                      BCC Recipients List ({computedBccRecipients.length})
                     </h4>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>CC List: {computedCcRecipients.length} emails</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Ready to Dispatch</span>
                   </div>
 
                   <div style={{
-                    maxHeight: 120, overflowY: 'auto', background: 'rgba(0,0,0,0.25)',
+                    maxHeight: 140, overflowY: 'auto', background: 'rgba(0,0,0,0.25)',
                     border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: 10,
                     fontFamily: 'Courier New, monospace', fontSize: 11, color: 'rgba(255,255,255,0.7)',
                     display: 'flex', flexWrap: 'wrap', gap: 6
                   }}>
-                    {computedRecipients.length === 0 ? (
-                      <span style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.35)' }}>No target recipients found for selected filters.</span>
+                    {computedBccRecipients.length === 0 ? (
+                      <span style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.35)' }}>No target recipients selected or entered.</span>
                     ) : (
-                      computedRecipients.map((mail, idx) => (
+                      computedBccRecipients.map((mail, idx) => (
                         <span key={idx} style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 4, padding: '2px 5px', color: '#4ade80' }}>
                           {mail}
                         </span>
@@ -1976,36 +1963,16 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  {computedCcRecipients.length > 0 && (
-                    <>
-                      <h4 style={{ margin: '8px 0 0', color: '#38bdf8', fontSize: 13, fontFamily: 'Montserrat,sans-serif' }}>
-                        CC Recipients List ({computedCcRecipients.length})
-                      </h4>
-                      <div style={{
-                        maxHeight: 90, overflowY: 'auto', background: 'rgba(0,0,0,0.25)',
-                        border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: 10,
-                        fontFamily: 'Courier New, monospace', fontSize: 11, color: 'rgba(255,255,255,0.7)',
-                        display: 'flex', flexWrap: 'wrap', gap: 6
-                      }}>
-                        {computedCcRecipients.map((mail, idx) => (
-                          <span key={idx} style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 4, padding: '2px 5px', color: '#38bdf8' }}>
-                            {mail}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
                   <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
                     <button
                       type="submit"
-                      disabled={sendingEmails || computedRecipients.length === 0}
+                      disabled={sendingEmails || computedBccRecipients.length === 0}
                       style={{
                         background: 'linear-gradient(135deg, #4ade80 0%, #16a34a 100%)',
                         color: '#000', border: 'none', padding: '12px 28px', borderRadius: 8,
-                        fontWeight: 800, cursor: (sendingEmails || computedRecipients.length === 0) ? 'not-allowed' : 'pointer',
+                        fontWeight: 800, cursor: (sendingEmails || computedBccRecipients.length === 0) ? 'not-allowed' : 'pointer',
                         fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
-                        opacity: (sendingEmails || computedRecipients.length === 0) ? 0.6 : 1,
+                        opacity: (sendingEmails || computedBccRecipients.length === 0) ? 0.6 : 1,
                         boxShadow: '0 4px 14px rgba(74,222,128,0.25)', transition: 'all 0.2s'
                       }}
                     >

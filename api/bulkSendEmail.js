@@ -10,12 +10,12 @@ export default async function handler(req, res) {
     subject,
     body,
     isHtml,
-    recipients,   // Array of email strings (To)
-    ccRecipients  // Array of email strings (CC, optional)
+    toEmail,       // Custom To email string (optional)
+    bccRecipients  // Array of email strings (BCC)
   } = req.body;
 
-  if (!subject || !body || !Array.isArray(recipients) || recipients.length === 0) {
-    return res.status(400).json({ message: 'Missing required fields: subject, body, or recipients array.' });
+  if (!subject || !body || !Array.isArray(bccRecipients) || bccRecipients.length === 0) {
+    return res.status(400).json({ message: 'Missing required fields: subject, body, or bccRecipients array.' });
   }
 
   try {
@@ -27,17 +27,17 @@ export default async function handler(req, res) {
       },
     });
 
+    const primaryTo = toEmail && toEmail.trim() 
+      ? toEmail.trim() 
+      : `"Blockchain Club, VIT Bhopal" <blockchainvitb@gmail.com>`;
+
     // Setup basic mail options
     const mailOptions = {
       from: `"Blockchain Club, VIT Bhopal" <blockchainvitb@gmail.com>`,
-      to: recipients.join(', '), // Send to selected team leaders / participants
+      to: primaryTo,
+      bcc: bccRecipients.join(', '),
       subject: subject,
     };
-
-    // If CC recipients are specified, append them
-    if (Array.isArray(ccRecipients) && ccRecipients.length > 0) {
-      mailOptions.cc = ccRecipients.join(', ');
-    }
 
     // Set body as HTML or Text based on isHtml flag
     if (isHtml) {
@@ -46,11 +46,11 @@ export default async function handler(req, res) {
       mailOptions.text = body;
     }
 
-    console.log(`[Bulk Email Dispatch] To: ${mailOptions.to}, CC: ${mailOptions.cc || 'None'}, Subject: "${subject}"`);
+    console.log(`[Bulk Email Dispatch] To: ${mailOptions.to}, BCC Count: ${bccRecipients.length}, Subject: "${subject}"`);
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(200).json({ success: true, message: `Successfully sent email to ${recipients.length} recipients.` });
+    return res.status(200).json({ success: true, message: `Successfully sent email to ${bccRecipients.length} recipients.` });
   } catch (error) {
     console.error('Nodemailer Bulk Send Error:', error);
     return res.status(500).json({ message: 'Failed to send bulk email.', error: error.message });
