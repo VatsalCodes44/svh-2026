@@ -1,8 +1,8 @@
 // utils/generateIdCard.js
 // ID Card Generation Logic - Separated from UI
 
-export const CARD_WIDTH = 1012;
-export const CARD_HEIGHT = 1536;
+export const CARD_WIDTH = 1448;
+export const CARD_HEIGHT = 1086;
 
 /**
  * Generate ID card with user photo and details
@@ -10,18 +10,14 @@ export const CARD_HEIGHT = 1536;
  * @param {string} params.templateSrc - Path to template image
  * @param {string} params.userImageSrc - User photo data URL
  * @param {string} params.name - User's full name
- * @param {string} params.team - Team name (optional)
- * @param {string} params.teamPosition - Team position (optional)
- * @param {string} params.role - User role (mentor, volunteer, etc.)
+ * @param {string} params.registrationNumber - User's registration number
  * @returns {Promise<string>} Data URL of generated ID card
  */
 export async function generateIdCard({
-    templateSrc,
+    templateSrc = '/student_coordinator.jpeg',
     userImageSrc,
     name,
-    team,
-    teamPosition,
-    role,
+    registrationNumber,
 }) {
     // Load template first to get its natural dimensions
     const template = new Image();
@@ -29,7 +25,7 @@ export async function generateIdCard({
     template.src = templateSrc;
     await new Promise((resolve, reject) => {
         template.onload = resolve;
-        template.onerror = reject;
+        template.onerror = (e) => reject(new Error('Failed to load template image: ' + templateSrc));
     });
 
     // Create canvas with template's natural dimensions
@@ -41,91 +37,86 @@ export async function generateIdCard({
     // Draw the full template at its natural dimensions
     ctx.drawImage(template, 0, 0);
 
-    // Load user image
-    const userImg = new Image();
-    userImg.crossOrigin = 'anonymous';
-    userImg.src = userImageSrc;
-    await new Promise((resolve, reject) => {
-        userImg.onload = resolve;
-        userImg.onerror = reject;
-    });
+    // Load user image if provided
+    if (userImageSrc) {
+        const userImg = new Image();
+        userImg.crossOrigin = 'anonymous';
+        userImg.src = userImageSrc;
+        await new Promise((resolve, reject) => {
+            userImg.onload = resolve;
+            userImg.onerror = (e) => reject(new Error('Failed to load user photo'));
+        });
 
-    // ---- PHOTO BOX PLACEMENT ----
-    // Template has both front and back cards side-by-side
-    // Front card (left side) has the white/orange bordered photo box
-    // Fine-tuned coordinates to fit perfectly inside the white box
+        // ══════════════════════════════════════════════════════════
+        // 🛠️ ADJUST USER PHOTO POSITION AND SIZE HERE
+        // ══════════════════════════════════════════════════════════
+        const photoX = 240;      // X position (left edge of photo box)
+        const photoY = 323;      // Y position (top edge of photo box)
+        const photoWidth = 292;  // Width of photo box
+        const photoHeight = 300; // Height of photo box
+        // ══════════════════════════════════════════════════════════
 
-    const photoSize = 224; // Size to fit inside the white box
-    const photoX = 160; // X position on front card (adjusted)
-    const photoY = 229; // Y position from top (moved up)
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(photoX, photoY, photoWidth, photoHeight);
+        ctx.clip();
 
-    // Draw user photo with clipping to prevent overflow
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(photoX, photoY, photoSize, photoSize + 8); // Increased height to fill more space
-    ctx.clip();
+        // Scale to cover-fit: fill entire box while maintaining aspect ratio
+        const scale = Math.max(
+            photoWidth / userImg.width,
+            photoHeight / userImg.height
+        );
 
-    // Cover-fit: scale to fill entire box while maintaining aspect ratio
-    const scale = Math.max(
-        photoSize / userImg.width,
-        photoSize / userImg.height
-    );
+        const drawWidth = userImg.width * scale;
+        const drawHeight = userImg.height * scale;
 
-    const drawWidth = userImg.width * scale;
-    const drawHeight = userImg.height * scale;
+        // Draw centered user image
+        ctx.drawImage(
+            userImg,
+            photoX + (photoWidth - drawWidth) / 2,
+            photoY + (photoHeight - drawHeight) / 2,
+            drawWidth,
+            drawHeight
+        );
 
-    // Center the scaled image within the photo box
-    ctx.drawImage(
-        userImg,
-        photoX + (photoSize - drawWidth) / 2,
-        photoY + (photoSize - drawHeight) / 2,
-        drawWidth,
-        drawHeight
-    );
-
-    ctx.restore();
-
-    // ---- TEXT RENDERING ----
-    // Position text below the photo on the front card
-    const textStartY = photoY + photoSize + 60;
-    const textStartX = photoX + photoSize / 2;
-    const maxTextWidth = 220; // Stricter width constraint to prevent overflow
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#FF8A2E'; // Orange color
-
-    // Draw name with aggressive auto-sizing for long names
-    let nameFontSize = 38; // Increased from 32 for better readability
-    ctx.font = `bold ${nameFontSize}px "Fira Code", monospace`;
-
-    // More aggressive sizing - reduce until it fits
-    while (ctx.measureText(name).width > maxTextWidth && nameFontSize > 24) {
-        nameFontSize -= 1; // Reduce by 1px for finer control
-        ctx.font = `bold ${nameFontSize}px "Fira Code", monospace`;
+        ctx.restore();
     }
 
-    ctx.fillText(name, textStartX, textStartY - 10);
+    // ══════════════════════════════════════════════════════════
+    // 🛠️ ADJUST TEXT POSITION, FONTS AND COLORS HERE
+    // ══════════════════════════════════════════════════════════
+    const textCenterX = 385;  // Center X for all text on left card
+    const nameY = 855;        // Y position for Full Name
+    const regNoY = 885;       // Y position for Registration Number
+    // ══════════════════════════════════════════════════════════
 
-    // Draw team text ONLY for volunteers and participants
-    if (['student_participant', 'volunteer'].includes(role) && team) {
-        // Format: "Event Team - Position" (team comes first, then position)
-        let teamText = team;
-        if (teamPosition) {
-            teamText = `${team} Team-${teamPosition}`;
+    // Ensure web fonts are fully loaded before rendering on Canvas
+    if (document.fonts) {
+        await document.fonts.ready;
+    }
+
+    ctx.textAlign = 'center';
+
+    // Draw Name
+    if (name) {
+        ctx.fillStyle = '#0f2942'; // Dark Navy
+        let fontSize = 26;
+        ctx.font = `italic 700 ${fontSize}px "Montserrat", "Poppins", sans-serif`;
+
+        while (ctx.measureText(name).width > 340 && fontSize > 18) {
+            fontSize -= 1;
+            ctx.font = `italic 700 ${fontSize}px "Montserrat", "Poppins", sans-serif`;
         }
 
-        const teamFontSize = Math.floor(nameFontSize * 1); // Same size as name
-        ctx.font = `600 ${teamFontSize}px "Fira Code", monospace`;
+        ctx.fillText(name.toUpperCase(), textCenterX, nameY);
+    }
 
-        // Ensure team text also fits
-        let currentTeamSize = teamFontSize;
-        while (ctx.measureText(teamText).width > maxTextWidth && currentTeamSize > 20) {
-            currentTeamSize -= 1;
-            ctx.font = `600 ${currentTeamSize}px "Fira Code", monospace`;
-        }
-
-        // Increased spacing from 12 to 18 for better separation
-        ctx.fillText(teamText, textStartX - 5, textStartY - 22 + nameFontSize + 18);
+    // Draw Registration Number
+    if (registrationNumber) {
+        ctx.fillStyle = '#0f2942'; // Dark Navy
+        let regFontSize = 26;
+        ctx.font = `italic 700 ${regFontSize}px "Montserrat", "Poppins", sans-serif`;
+        ctx.fillText(`${registrationNumber.toUpperCase()}`, textCenterX, regNoY);
     }
 
     // Return final image as data URL
@@ -133,16 +124,9 @@ export async function generateIdCard({
 }
 
 /**
- * Get template image path based on user type
- * @param {string} userType - User role type
+ * Get template image path
  * @returns {string} Path to template image
  */
-export function getTemplateImage(userType) {
-    const templates = {
-        mentor: '/mentor.png',
-        student_coordinator: '/student_coordinator.png',
-        volunteer: '/volunteer.png',
-        student_participant: '/partcipant.png'
-    };
-    return templates[userType] || '/mentor.png';
+export function getTemplateImage() {
+    return '/student_coordinator.jpeg';
 }

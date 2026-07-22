@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { motion } from 'motion';
-import { ArrowLeft, Upload, User, Mail, Download, FileImage, FileText, X, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Upload, User, Mail, Download, FileImage, FileText, X, CheckCircle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast, { Toaster } from 'react-hot-toast';
@@ -82,9 +82,9 @@ const IDCard = () => {
 
         try {
             const { data, error } = await supabase
-                .from('id_card_users')
+                .from('profiles')
                 .select('*')
-                .eq('email_id', formData.email.toLowerCase())
+                .eq('email', formData.email.toLowerCase())
                 .single();
 
             if (error) {
@@ -99,7 +99,7 @@ const IDCard = () => {
                 setUserData(data);
                 setFormData({
                     ...formData,
-                    name: data.name || formData.name
+                    name: data.full_name || formData.name
                 });
                 toast.success('User verified successfully!');
             }
@@ -128,13 +128,13 @@ const IDCard = () => {
         toast.loading('Generating your ID card...', { id: 'generating' });
 
         try {
+            const displayName = userData.full_name || userData.name || formData.name || 'Participant';
+            const registrationNumber = userData.registration_number || '';
             const imageUrl = await generateIdCard({
-                templateSrc: getTemplateImage(userData.user_type),
+                templateSrc: getTemplateImage(),
                 userImageSrc: formData.imagePreview,
-                name: userData.name,
-                team: userData.team,
-                teamPosition: userData.team_position,
-                role: userData.user_type,
+                name: displayName,
+                registrationNumber: registrationNumber,
             });
 
             setGeneratedCardUrl(imageUrl);
@@ -155,9 +155,10 @@ const IDCard = () => {
             return;
         }
 
+        const fileName = (userData?.full_name || userData?.name || 'Participant').replace(/\s+/g, '_');
         const link = document.createElement('a');
         link.href = generatedCardUrl;
-        link.download = `${userData.name.replace(/\s+/g, '_')}_ID_Card.png`;
+        link.download = `${fileName}_ID_Card.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -172,19 +173,18 @@ const IDCard = () => {
         }
 
         try {
-            // Create PDF with custom dimensions to match ID card aspect ratio
-            // Using mm units: 101.2mm × 153.6mm (1012px × 1536px at 10px/mm)
+            const fileName = (userData?.full_name || userData?.name || 'Participant').replace(/\s+/g, '_');
             const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: [101.2, 153.6]
+                orientation: 'landscape',
+                unit: 'px',
+                format: [1448, 1086]
             });
 
             // Add generated image to PDF
-            pdf.addImage(generatedCardUrl, 'PNG', 0, 0, 101.2, 153.6);
+            pdf.addImage(generatedCardUrl, 'PNG', 0, 0, 1448, 1086);
 
             // Download PDF
-            pdf.save(`${userData.name.replace(/\s+/g, '_')}_ID_Card.pdf`);
+            pdf.save(`${fileName}_ID_Card.pdf`);
             toast.success('ID card downloaded as PDF!');
         } catch (error) {
             console.error('Error generating PDF:', error);
@@ -216,34 +216,36 @@ const IDCard = () => {
     };
 
     return (
-        <div className="min-h-screen w-full pt-24 pb-12 px-4 relative overflow-hidden">
+        <div className="min-h-screen w-full bg-gradient-to-b from-slate-50 via-gray-50 to-amber-50/20 pt-28 pb-16 px-4 relative overflow-hidden font-poppins">
             {/* Toast Container */}
             <Toaster
                 position="top-center"
                 toastOptions={{
                     duration: 3000,
                     style: {
-                        background: '#1a1410',
-                        color: '#fff1ce',
-                        border: '1px solid rgba(245, 188, 34, 0.3)',
+                        background: '#0f2942',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255, 153, 51, 0.4)',
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontWeight: 600,
                     },
                     success: {
                         iconTheme: {
-                            primary: '#f5bc22',
-                            secondary: '#fff1ce',
+                            primary: '#FF9933',
+                            secondary: '#ffffff',
                         },
                     },
                     error: {
                         iconTheme: {
                             primary: '#ef4444',
-                            secondary: '#fff1ce',
+                            secondary: '#ffffff',
                         },
                     },
                 }}
             />
-            {/* Background Elements */}
-            <div className="absolute top-0 left-0 w-full h-[500px] bg-yellow-500/5 blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-amber-600/5 blur-[100px] pointer-events-none" />
+
+            {/* Patriotic Gradient Accent Top Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-r from-orange-400/10 via-amber-300/5 to-emerald-400/10 blur-[120px] pointer-events-none" />
 
             <div className="max-w-7xl mx-auto relative z-10">
                 {/* Back Button */}
@@ -251,101 +253,118 @@ const IDCard = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     onClick={() => navigate('/')}
-                    className="mb-8 flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors"
+                    className="mb-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-slate-200 text-[#0f2942] font-semibold text-sm font-montserrat shadow-sm hover:border-[#FF9933] hover:text-[#FF9933] hover:shadow-md transition-all duration-300 group"
                 >
-                    <ArrowLeft className="w-5 h-5" />
-                    <span className="font-semibold">Back to Home</span>
+                    <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    <span>Back to Home</span>
                 </motion.button>
 
-                {/* Header */}
+                {/* Header Section */}
                 <div className="text-center mb-12">
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-[#FF9933]/30 text-[#FF9933] text-xs font-bold font-montserrat tracking-wide uppercase mb-4"
+                    >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>SMART VIT HACKATHON 2026</span>
+                    </motion.div>
+
                     <motion.h1
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 mb-4"
+                        className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black font-montserrat text-[#0f2942] tracking-tight mb-4"
                     >
-                        Generate ID Card
+                        Generate <span className="bg-gradient-to-r from-[#FF9933] to-[#e07800] bg-clip-text text-transparent">ID Card</span>
                     </motion.h1>
+
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base"
+                        className="text-slate-600 max-w-2xl mx-auto text-sm sm:text-base font-normal leading-relaxed"
                     >
                         Upload your photo and enter your details to generate your INNOVIT 2026 ID card
                     </motion.p>
                 </div>
 
-                {/* Main Content - Horizontal Layout */}
+                {/* Main Form Section - Horizontal Grid */}
                 <div className="space-y-8">
-                    {/* Top Row - Upload and Fields */}
+                    {/* Top Row - Upload Box & User Details */}
                     <div className="grid lg:grid-cols-2 gap-8">
-                        {/* Upload Box */}
+                        {/* Photo Upload Box */}
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="glass-strong p-6 md:p-8 rounded-2xl border border-yellow-500/10 bg-[#111]/80 backdrop-blur-xl shadow-2xl"
+                            className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between"
                         >
-                            <h2 className="text-xl md:text-2xl font-bold text-yellow-400 mb-6 flex items-center gap-2">
-                                <Upload className="w-6 h-6" />
-                                Upload Photo
-                            </h2>
-
-                            {/* Drag and Drop Area */}
-                            <div
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`
-                                    relative border-2 border-dashed rounded-xl p-8 md:p-12 text-center cursor-pointer
-                                    transition-all duration-300
-                                    ${isDragging
-                                        ? 'border-yellow-400 bg-yellow-400/10 scale-105'
-                                        : 'border-yellow-500/30 hover:border-yellow-400/50 hover:bg-yellow-400/5'
-                                    }
-                                `}
-                            >
-                                {formData.imagePreview ? (
-                                    <div className="relative">
-                                        <img
-                                            src={formData.imagePreview}
-                                            alt="Preview"
-                                            className="w-full aspect-square object-cover rounded-lg"
-                                        />
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRemoveImage();
-                                            }}
-                                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
-                                        >
-                                            <X className="w-5 h-5" />
-                                        </button>
-                                        <p className="mt-4 text-sm text-gray-400">Click to change image</p>
+                            <div>
+                                <h2 className="text-xl sm:text-2xl font-bold font-montserrat text-[#0f2942] mb-6 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-[#FF9933]">
+                                        <Upload className="w-5 h-5" />
                                     </div>
-                                ) : (
-                                    <>
-                                        <Upload className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-yellow-400" />
-                                        <p className="text-[#fff1ce] font-semibold mb-2 text-sm md:text-base">
-                                            Drag & drop your photo here
-                                        </p>
-                                        <p className="text-gray-400 text-xs md:text-sm mb-4">
-                                            or click to browse
-                                        </p>
-                                        <p className="text-gray-500 text-xs">
-                                            Supported formats: JPG, PNG, WEBP
-                                        </p>
-                                    </>
-                                )}
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
+                                    <span>Upload Photo</span>
+                                </h2>
+
+                                {/* Drag and Drop Box */}
+                                <div
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className={`
+                                        relative border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer
+                                        transition-all duration-300 flex flex-col items-center justify-center min-h-[260px]
+                                        ${isDragging
+                                            ? 'border-[#FF9933] bg-amber-500/10 scale-[1.01]'
+                                            : 'border-slate-300 bg-slate-50/80 hover:border-[#FF9933]/60 hover:bg-amber-500/5'
+                                        }
+                                    `}
+                                >
+                                    {formData.imagePreview ? (
+                                        <div className="relative w-full max-w-xs mx-auto">
+                                            <img
+                                                src={formData.imagePreview}
+                                                alt="Preview"
+                                                className="w-full aspect-square object-cover rounded-xl shadow-md border border-slate-200"
+                                            />
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRemoveImage();
+                                                }}
+                                                className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-transform hover:scale-110"
+                                                title="Remove photo"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                            <p className="mt-4 text-xs font-semibold text-slate-500">Click to change image</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="w-16 h-16 rounded-full bg-[#FF9933]/15 flex items-center justify-center mb-4 text-[#FF9933]">
+                                                <Upload className="w-8 h-8" />
+                                            </div>
+                                            <p className="text-[#0f2942] font-bold font-montserrat mb-1 text-base sm:text-lg">
+                                                Drag & drop your photo here
+                                            </p>
+                                            <p className="text-slate-500 text-xs sm:text-sm mb-4">
+                                                or click to browse
+                                            </p>
+                                            <span className="inline-block px-3 py-1 rounded-full bg-slate-200/60 text-slate-600 text-xs font-medium">
+                                                Supported formats: JPG, PNG, WEBP
+                                            </span>
+                                        </>
+                                    )}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                    />
+                                </div>
                             </div>
                         </motion.div>
 
@@ -354,235 +373,211 @@ const IDCard = () => {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="glass-strong p-6 md:p-8 rounded-2xl border border-yellow-500/10 bg-[#111]/80 backdrop-blur-xl shadow-2xl"
+                            className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all duration-300"
                         >
-                            <h2 className="text-xl md:text-2xl font-bold text-yellow-400 mb-6 flex items-center gap-2">
-                                <User className="w-6 h-6" />
-                                Your Details
+                            <h2 className="text-xl sm:text-2xl font-bold font-montserrat text-[#0f2942] mb-6 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-[#0f2942]/10 flex items-center justify-center text-[#0f2942]">
+                                    <User className="w-5 h-5" />
+                                </div>
+                                <span>Your Details</span>
                             </h2>
 
                             <div className="space-y-5">
                                 {/* Name Input */}
                                 <div>
-                                    <label className="block text-[#fff1ce] font-semibold mb-2 text-sm md:text-base">
+                                    <label className="block text-[#0f2942] font-semibold font-montserrat mb-2 text-sm">
                                         Full Name
                                     </label>
                                     <div className="relative">
-                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-400/50" />
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                         <input
                                             type="text"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
                                             placeholder="Enter your full name"
-                                            className="w-full pl-12 pr-4 py-3 md:py-4 bg-[#0a0a0f]/50 border border-yellow-500/20 rounded-xl text-[#fff1ce] placeholder-gray-500 focus:outline-none focus:border-yellow-400/50 focus:ring-2 focus:ring-yellow-400/20 transition-all text-sm md:text-base"
+                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[#0f2942] placeholder-slate-400 font-medium focus:outline-none focus:border-[#FF9933] focus:ring-2 focus:ring-[#FF9933]/20 transition-all text-sm"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Email Input */}
                                 <div>
-                                    <label className="block text-[#fff1ce] font-semibold mb-2 text-sm md:text-base">
+                                    <label className="block text-[#0f2942] font-semibold font-montserrat mb-2 text-sm">
                                         Email Address
                                     </label>
                                     <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-400/50" />
+                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                         <input
                                             type="email"
                                             name="email"
                                             value={formData.email}
                                             onChange={handleInputChange}
                                             placeholder="Enter your email address"
-                                            className="w-full pl-12 pr-4 py-3 md:py-4 bg-[#0a0a0f]/50 border border-yellow-500/20 rounded-xl text-[#fff1ce] placeholder-gray-500 focus:outline-none focus:border-yellow-400/50 focus:ring-2 focus:ring-yellow-400/20 transition-all text-sm md:text-base"
+                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[#0f2942] placeholder-slate-400 font-medium focus:outline-none focus:border-[#FF9933] focus:ring-2 focus:ring-[#FF9933]/20 transition-all text-sm"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Verify Button */}
                                 <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
                                     onClick={handleVerifyUser}
                                     disabled={!formData.email || isVerifying}
                                     className={`
-                                        w-full py-3 md:py-4 rounded-xl font-bold text-sm md:text-base
-                                        transition-all duration-300 flex items-center justify-center gap-2
+                                        w-full py-3.5 rounded-xl font-bold font-montserrat text-sm
+                                        transition-all duration-300 flex items-center justify-center gap-2 shadow-md
                                         ${formData.email && !isVerifying
-                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:shadow-blue-500/50'
-                                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                            ? 'bg-gradient-to-r from-[#0f2942] to-[#1a3f6f] text-white hover:shadow-lg hover:shadow-[#0f2942]/30'
+                                            : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                                         }
                                     `}
                                 >
                                     {isVerifying ? (
                                         <>
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            Verifying...
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span>Verifying...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <CheckCircle className="w-5 h-5" />
-                                            Verify Email
+                                            <CheckCircle className="w-4 h-4" />
+                                            <span>Verify Email</span>
                                         </>
                                     )}
                                 </motion.button>
 
-                                {/* User Data Display */}
+                                {/* User Data Display Card */}
                                 {userData && (
-                                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                                        <p className="text-green-400 font-semibold mb-2 flex items-center gap-2">
-                                            <CheckCircle className="w-5 h-5" />
-                                            Verified User
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl"
+                                    >
+                                        <p className="text-emerald-800 font-bold font-montserrat text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                                            <span>Verified User</span>
                                         </p>
-                                        <div className="space-y-1 text-sm">
-                                            <p className="text-[#fff1ce]"><span className="text-gray-400">Name:</span> {userData.name}</p>
-                                            <p className="text-[#fff1ce]"><span className="text-gray-400">Role:</span> {getUserRoleDisplay(userData.user_type)}</p>
-                                            {userData.team && <p className="text-[#fff1ce]"><span className="text-gray-400">Team:</span> {userData.team}</p>}
-                                            {userData.team_position && <p className="text-[#fff1ce]"><span className="text-gray-400">Position:</span> {userData.team_position}</p>}
+                                        <div className="space-y-1 text-sm text-slate-700 font-medium">
+                                            <p><span className="text-slate-500 font-normal">Name:</span> <strong className="text-[#0f2942]">{userData.full_name || userData.name}</strong></p>
+                                            <p><span className="text-slate-500 font-normal">Registration Number:</span> <strong className="text-[#0f2942]">{userData.registration_number || 'N/A'}</strong></p>
+                                            {userData.email && <p><span className="text-slate-500 font-normal">Email:</span> {userData.email}</p>}
+                                            {userData.phone && <p><span className="text-slate-500 font-normal">Phone:</span> {userData.phone}</p>}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 )}
 
                                 {/* Generate Button */}
                                 <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
                                     onClick={handleGenerateCard}
                                     disabled={!userData || !formData.imagePreview || isGenerating}
                                     className={`
-                                        w-full py-3 md:py-4 rounded-xl font-bold text-sm md:text-base
-                                        transition-all duration-300 flex items-center justify-center gap-2
+                                        w-full py-4 rounded-xl font-bold font-montserrat text-sm sm:text-base
+                                        transition-all duration-300 flex items-center justify-center gap-2 shadow-md
                                         ${userData && formData.imagePreview && !isGenerating
-                                            ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-[#0a0a0f] hover:shadow-lg hover:shadow-yellow-400/50'
-                                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                            ? 'bg-gradient-to-r from-[#FF9933] to-[#e07800] text-white hover:shadow-xl hover:shadow-orange-500/30'
+                                            : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                                         }
                                     `}
                                 >
                                     {isGenerating ? (
                                         <>
-                                            <div className="w-5 h-5 border-2 border-[#0a0a0f] border-t-transparent rounded-full animate-spin" />
-                                            Generating...
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span>Generating...</span>
                                         </>
                                     ) : (
-                                        'Generate ID Card'
+                                        <span>Generate ID Card</span>
                                     )}
                                 </motion.button>
                             </div>
                         </motion.div>
                     </div>
 
-                    {/* Bottom Row - Full Width Preview */}
+                    {/* Bottom Row - Full Width Card Preview */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
-                        className="glass-strong p-6 md:p-8 rounded-2xl border border-yellow-500/10 bg-[#111]/80 backdrop-blur-xl shadow-2xl"
+                        className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50"
                     >
-                        <h2 className="text-xl md:text-2xl font-bold text-yellow-400 mb-6">
-                            ID Card Preview
+                        <h2 className="text-xl sm:text-2xl font-bold font-montserrat text-[#0f2942] mb-6 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-[#138808]">
+                                <FileImage className="w-5 h-5" />
+                            </div>
+                            <span>ID Card Preview</span>
                         </h2>
 
                         {showPreview && generatedCardUrl ? (
                             <div className="space-y-6">
-                                {/* Generated ID Card Preview */}
-                                <div className="flex justify-center">
-                                    <div
-                                        style={{
-                                            width: 'auto',
-                                            height: 'auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            background: '#0a0a0f',
-                                            borderRadius: '16px',
-                                            boxShadow: '0 0 40px rgba(245,188,34,0.15)'
-                                        }}
-                                    >
+                                {/* Generated ID Card Display */}
+                                <div className="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                                    <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-300/60 max-w-full">
                                         <img
                                             src={generatedCardUrl}
                                             alt="Generated ID Card"
-                                            style={{
-                                                width: 'auto',
-                                                height: 'auto',
-                                                maxWidth: '100%',
-                                                maxHeight: '100%',
-                                                display: 'block'
-                                            }}
+                                            className="w-auto h-auto max-w-full max-h-[600px] block rounded-2xl"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Download Buttons */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto pt-2">
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handleDownloadImage}
-                                        className="flex items-center justify-center gap-2 py-3 md:py-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-[#0a0a0f] rounded-xl font-bold hover:shadow-lg hover:shadow-yellow-400/50 transition-all text-sm md:text-base"
+                                        className="flex items-center justify-center gap-2 py-4 px-6 bg-gradient-to-r from-[#FF9933] to-[#e07800] text-white rounded-xl font-bold font-montserrat shadow-md hover:shadow-xl hover:shadow-orange-500/25 transition-all text-sm sm:text-base"
                                     >
                                         <FileImage className="w-5 h-5" />
-                                        Download as Image
+                                        <span>Download as Image</span>
                                     </motion.button>
+
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handleDownloadPDF}
-                                        className="flex items-center justify-center gap-2 py-3 md:py-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-[#0a0a0f] rounded-xl font-bold hover:shadow-lg hover:shadow-amber-500/50 transition-all text-sm md:text-base"
+                                        className="flex items-center justify-center gap-2 py-4 px-6 bg-gradient-to-r from-[#0f2942] to-[#1a3f6f] text-white rounded-xl font-bold font-montserrat shadow-md hover:shadow-xl hover:shadow-[#0f2942]/25 transition-all text-sm sm:text-base"
                                     >
                                         <FileText className="w-5 h-5" />
-                                        Download as PDF
+                                        <span>Download as PDF</span>
                                     </motion.button>
                                 </div>
                             </div>
                         ) : userData ? (
                             <div className="space-y-6">
                                 {/* Show template image after user verification */}
-                                <div className="flex justify-center">
-                                    <div
-                                        style={{
-                                            width: 'auto',
-                                            height: 'auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            background: '#0a0a0f',
-                                            borderRadius: '16px',
-                                            boxShadow: '0 0 40px rgba(245,188,34,0.15)'
-                                        }}
-                                    >
+                                <div className="flex justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                                    <div className="relative rounded-2xl overflow-hidden shadow-xl border border-slate-200 max-w-full">
                                         <img
-                                            src={getTemplateImage(userData.user_type)}
+                                            src={getTemplateImage()}
                                             alt="ID Card Template"
-                                            style={{
-                                                width: 'auto',
-                                                height: 'auto',
-                                                maxWidth: '100%',
-                                                maxHeight: '100%',
-                                                display: 'block'
-                                            }}
+                                            className="w-auto h-auto max-w-full max-h-[500px] block rounded-2xl"
                                         />
                                     </div>
                                 </div>
-                                <p className="text-center text-gray-400 text-sm">
+                                <p className="text-center text-slate-500 text-sm font-medium">
                                     Upload your photo and click 'Generate ID Card' to create your personalized card
                                 </p>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-12 md:py-20 text-center">
-                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-yellow-400/10 flex items-center justify-center mb-6">
-                                    <Download className="w-10 h-10 md:w-12 md:h-12 text-yellow-400/50" />
+                            <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                                <div className="w-20 h-20 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-5 text-[#FF9933]">
+                                    <Download className="w-10 h-10" />
                                 </div>
-                                <p className="text-[#fff1ce] text-base md:text-lg font-semibold mb-2">
+                                <p className="text-[#0f2942] text-lg font-bold font-montserrat mb-1">
                                     No Preview Available
                                 </p>
-                                <p className="text-gray-400 text-xs md:text-sm max-w-xs">
+                                <p className="text-slate-500 text-sm max-w-xs font-normal">
                                     Verify your email to see your ID card template
                                 </p>
                             </div>
                         )}
                     </motion.div>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

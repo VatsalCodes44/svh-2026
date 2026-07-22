@@ -1,12 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-/* ═══════════════════════════════════════════════
-   SHARED UTILITIES (Matching Home.jsx)
-═══════════════════════════════════════════════ */
-
-/* Ashoka Chakra SVG */
 function AshokaChakra({ size = 200, opacity = 0.08, spin = true }) {
   const spokes = Array.from({ length: 24 }, (_, i) => i);
   return (
@@ -23,7 +18,6 @@ function AshokaChakra({ size = 200, opacity = 0.08, spin = true }) {
   );
 }
 
-/* Floating Particles */
 function FloatingParticles({ count = 18 }) {
   const particles = useMemo(() =>
     Array.from({ length: count }, (_, i) => ({
@@ -32,22 +26,12 @@ function FloatingParticles({ count = 18 }) {
       size: (i % 3) + 2,
       duration: 12 + (i % 7) * 2.5,
       delay: -((i * 3.7) % 12),
-      color: i % 3 === 0
-        ? 'rgba(255,153,51,0.45)'
-        : i % 3 === 1
-          ? 'rgba(19,136,8,0.35)'
-          : 'rgba(255,255,255,0.2)',
+      color: i % 3 === 0 ? 'rgba(255,153,51,0.45)' : i % 3 === 1 ? 'rgba(19,136,8,0.35)' : 'rgba(255,255,255,0.2)',
     })), [count]);
-
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
       {particles.map(p => (
-        <div key={p.id} style={{
-          position: 'absolute', bottom: '-8px', left: p.left,
-          width: p.size, height: p.size, borderRadius: '50%', background: p.color,
-          animation: `particle-drift ${p.duration}s linear ${p.delay}s infinite`,
-          willChange: 'transform',
-        }} />
+        <div key={p.id} style={{ position: 'absolute', bottom: '-8px', left: p.left, width: p.size, height: p.size, borderRadius: '50%', background: p.color, animation: `particle-drift ${p.duration}s linear ${p.delay}s infinite`, willChange: 'transform' }} />
       ))}
     </div>
   );
@@ -55,25 +39,17 @@ function FloatingParticles({ count = 18 }) {
 
 export default function Login() {
   const [m, setM] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('team_leader');
-  
-  // New fields for team and profile
-  const [teamName, setTeamName] = useState('');
-  const [collegeName, setCollegeName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [gender, setGender] = useState('Female');
-
-  const [error, setError] = useState('');
+  const [toastMessage, setToastMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => { const t = setTimeout(() => setM(true), 80); return () => clearTimeout(t); }, []);
 
-  // Stagger helper
+  const showToast = (text, type = 'error') => setToastMessage({ text, type });
+
   const a = (delay, extra = {}) => ({
     opacity: m ? 1 : 0,
     transform: m ? 'translateY(0)' : 'translateY(28px)',
@@ -83,88 +59,73 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    if (!email || !password || (!isLogin && !fullName)) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (!isLogin && role === 'team_leader' && (!teamName || !collegeName)) {
-      setError('Please provide Team Name and College Name.');
-      return;
-    }
-
+    setToastMessage(null);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+    if (!cleanEmail || !cleanPassword) { showToast('Please enter both Email and Password.', 'error'); return; }
     setLoading(true);
-
     try {
-      if (isLogin) {
-        // Sign In
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) throw signInError;
-
-        alert('Login successful! Welcome to SVH 2026.');
-        if (role === 'team_leader') {
-          navigate('/leader-dashboard');
-        } else {
-          navigate('/');
-        }
-      } else {
-        // Sign Up
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (signUpError) throw signUpError;
-
-        if (authData.user) {
-          let newTeamId = null;
-
-          // If role is team leader, create the team first
-          if (role === 'team_leader') {
-            const { data: teamData, error: teamError } = await supabase
-              .from('teams')
-              .insert([{ 
-                team_name: teamName, 
-                college_name: collegeName,
-                email: email,
-                password: password
-              }])
-              .select()
-              .single();
-            
-            if (teamError) throw teamError;
-            newTeamId = teamData.id;
-          }
-
-          // Insert profile details
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: authData.user.id,
-                email,
-                full_name: fullName,
-                is_team_leader: role === 'team_leader',
-                team_id: newTeamId,
-                phone: phone,
-                gender: gender
-              }
-            ]);
-
-          if (profileError) throw profileError;
-        }
-
-        alert('Registration successful! Please login.');
-        setIsLogin(true);
+      const ADMIN_CREDS = [
+        { email: 'dhairya@svh.com', pass: '2026@svh', name: 'Dhairya (Super Admin)' },
+        { email: 'abhilash@svh.com', pass: '2026@svh', name: 'Abhilash (Super Admin)' },
+        { email: 'soumya@svh.com', pass: '2026@svh', name: 'Soumya (Super Admin)' },
+        { email: 'ayush@svh.com', pass: '2026@svh', name: 'Ayush (Super Admin)' },
+        { email: 'admin@svh2026.com', pass: 'admin123', name: 'Super Admin' },
+      ];
+      const foundAdmin = ADMIN_CREDS.find(ac => ac.email.toLowerCase() === cleanEmail && ac.pass === cleanPassword);
+      if (foundAdmin) {
+        localStorage.setItem('super_eval_session', JSON.stringify({ email: foundAdmin.email, name: foundAdmin.name, role: 'super_admin' }));
+        showToast('Admin Login Successful. Redirecting...', 'success');
+        setTimeout(() => navigate('/super-admin-dashboard'), 500);
+        return;
       }
+
+      const EVAL_CREDS = [
+        { email: 'dhairya.23bce10225@vitbhopal.ac.in', pass: 'svh2026@evaluator_dhairya', name: 'Dhairya Evaluator' },
+        { email: 'ayush.24mei10025@vitbhopal.ac.in', pass: 'svh2026@evaluator_ayush', name: 'Ayush Evaluator' },
+      ];
+      const foundEval = EVAL_CREDS.find(ec => ec.email.toLowerCase() === cleanEmail && ec.pass === cleanPassword);
+      if (foundEval) {
+        localStorage.setItem('evaluator_session', JSON.stringify({ email: foundEval.email, name: foundEval.name, role: 'Evaluator' }));
+        showToast('Evaluator Login Successful. Redirecting...', 'success');
+        setTimeout(() => navigate('/evaluator-dashboard'), 500);
+        return;
+      }
+
+      const { data: appUser } = await supabase.from('app_users').select('*').eq('email', cleanEmail).eq('password', cleanPassword).maybeSingle();
+      if (appUser) {
+        if (appUser.role === 'super_admin' || appUser.role === 'admin') {
+          localStorage.setItem('super_eval_session', JSON.stringify({ id: appUser.id, email: appUser.email, name: appUser.full_name || appUser.email, role: 'super_admin' }));
+          showToast('Admin Authentication Successful. Redirecting...', 'success');
+          setTimeout(() => navigate('/super-admin-dashboard'), 500);
+          return;
+        } else if (appUser.role === 'evaluator') {
+          localStorage.setItem('evaluator_session', JSON.stringify({ id: appUser.id, email: appUser.email, name: appUser.full_name || appUser.email, role: 'Evaluator' }));
+          showToast('Evaluator Login Successful. Redirecting...', 'success');
+          setTimeout(() => navigate('/evaluator-dashboard'), 500);
+          return;
+        }
+      }
+
+      const { data: evalData } = await supabase.from('evaluators').select('*').eq('email', cleanEmail).eq('password', cleanPassword).maybeSingle();
+      if (evalData) {
+        localStorage.setItem('evaluator_session', JSON.stringify({ id: evalData.id, email: evalData.email, name: evalData.name || evalData.email, role: 'Evaluator' }));
+        showToast('Evaluator Login Successful. Redirecting...', 'success');
+        setTimeout(() => navigate('/evaluator-dashboard'), 500);
+        return;
+      }
+
+      const { data: teamData } = await supabase.from('teams').select('*').eq('email', cleanEmail).eq('password', cleanPassword).maybeSingle();
+      if (teamData) {
+        localStorage.setItem('leader_session', JSON.stringify({ leaderName: teamData.team_name || 'Team Leader', teamName: teamData.team_name || 'Your Team', teamId: teamData.id, email: teamData.email, password: teamData.password }));
+        showToast('Login Successful. Redirecting to Portal...', 'success');
+        setTimeout(() => navigate('/leader-dashboard'), 500);
+        return;
+      }
+
+      throw new Error('Invalid credentials. Please verify your email and password.');
     } catch (err) {
-      setError(err.message || 'An error occurred during authentication.');
+      showToast(err.message || 'Authentication failed.', 'error');
     } finally {
       setLoading(false);
     }
@@ -175,46 +136,77 @@ export default function Login() {
       position: 'relative', minHeight: 'calc(100vh - 60px)',
       background: 'linear-gradient(160deg, #07192c 0%, #0f2942 45%, #07192c 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      overflow: 'hidden', padding: '60px 20px',
+      overflow: 'hidden', padding: '60px 20px', fontFamily: 'Poppins, sans-serif'
     }}>
-      {/* Animated particles */}
       <FloatingParticles count={22} />
-
-      {/* Chakras */}
       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 0 }}>
         <AshokaChakra size={640} opacity={0.045} spin />
       </div>
-
-      {/* Ambient glows */}
       <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(255,153,51,0.08) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
       <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(19,136,8,0.06) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      {/* ── CONTENT ── */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 440 }}>
-        <div style={{
-          ...a(200),
-          background: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 153, 51, 0.15)',
-          borderRadius: 24,
-          padding: '40px 32px',
-          backdropFilter: 'blur(16px)',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-          <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 28, margin: '0 0 12px', letterSpacing: -0.5 }}>
-            Login Portal Coming Soon!
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 420 }}>
+        <div style={{ ...a(200), background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,153,51,0.15)', borderRadius: 24, padding: '38px 30px', backdropFilter: 'blur(16px)', boxShadow: '0 24px 64px rgba(0,0,0,0.4)', textAlign: 'center' }}>
+          <div style={{ fontSize: 38, marginBottom: 10 }}>🔒</div>
+          <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 900, color: '#fff', fontSize: 24, margin: '0 0 4px', letterSpacing: -0.5 }}>
+            Login Portal
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, fontFamily: 'Poppins,sans-serif', margin: 0, lineHeight: 1.6 }}>
-            The login section will be activated once you receive your credentials via email.
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, marginBottom: 24, fontFamily: 'Poppins,sans-serif' }}>
+            SVH 2026 — Team Leaders, Evaluators & Admins
           </p>
+
+          {toastMessage && (
+            <div style={{ background: toastMessage.type === 'success' ? 'rgba(74,222,128,0.12)' : 'rgba(255,107,107,0.12)', border: toastMessage.type === 'success' ? '1px solid rgba(74,222,128,0.35)' : '1px solid rgba(255,107,107,0.35)', color: toastMessage.type === 'success' ? '#4ade80' : '#ff6b6b', padding: '10px 14px', borderRadius: 8, fontSize: 12.5, marginBottom: 18, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>{toastMessage.type === 'success' ? '✅' : '⚠️'}</span>
+              <span>{toastMessage.text}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.65)', fontSize: 11, marginBottom: 5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: 'Montserrat,sans-serif' }}>Role</label>
+              <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: '100%', padding: '11px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none' }}>
+                <option value="team_leader" style={{ background: '#0f2942', color: '#fff' }}>Team Leader</option>
+                <option value="evaluator" style={{ background: '#0f2942', color: '#fff' }}>Evaluator</option>
+                <option value="super_admin" style={{ background: '#0f2942', color: '#fff' }}>Super Admin</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.65)', fontSize: 11, marginBottom: 5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: 'Montserrat,sans-serif' }}>Email Address</label>
+              <input type="email" required autoComplete="username" placeholder="Enter registered email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', padding: '11px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ display: 'block', color: 'rgba(255,255,255,0.65)', fontSize: 11, marginBottom: 5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: 'Montserrat,sans-serif' }}>Password</label>
+              <input type="password" required autoComplete="current-password" placeholder="Enter account password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '11px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 13, boxSizing: 'border-box', outline: 'none' }} />
+            </div>
+
+            <button type="submit" disabled={loading} style={{ width: '100%', padding: '13px', background: 'linear-gradient(135deg, #FF9933, #e07800)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontFamily: 'Montserrat,sans-serif', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 6px 20px rgba(255,153,51,0.3)', transition: 'all 0.2s' }}>
+              {loading ? 'Authenticating...' : 'Sign In'}
+            </button>
+          </form>
+
+          <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11.5, lineHeight: 1.65, margin: '0 0 10px', fontFamily: 'Poppins,sans-serif' }}>
+              Don't have login credentials? Contact the tech team on WhatsApp to get your Team Email & Password.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="https://wa.me/919332404107" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.25)', borderRadius: 20, color: '#25D366', fontSize: 11, textDecoration: 'none', fontWeight: 600, fontFamily: 'Poppins,sans-serif' }}>
+                💬 Soumya - 9332404107
+
+              </a>
+              <a href="https://wa.me/919511454951" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.25)', borderRadius: 20, color: '#25D366', fontSize: 11, textDecoration: 'none', fontWeight: 600, fontFamily: 'Poppins,sans-serif' }}>
+                💬 Abhilash - 9511454951
+              </a>
+            </div>
+          </div>
         </div>
 
-        {/* Tricolour footer strip - fixed to the card */}
-        <div style={{ ...a(300), display: 'flex', justifyContent: 'center', marginTop: 30 }}>
-           <div style={{ height: 3, width: 40, background: '#FF9933', borderRadius: 2 }} />
-           <div style={{ height: 3, width: 20, background: '#fff', borderRadius: 2, margin: '0 6px' }} />
-           <div style={{ height: 3, width: 40, background: '#138808', borderRadius: 2 }} />
+        <div style={{ ...a(300), display: 'flex', justifyContent: 'center', marginTop: 28 }}>
+          <div style={{ height: 3, width: 40, background: '#FF9933', borderRadius: 2 }} />
+          <div style={{ height: 3, width: 20, background: '#fff', borderRadius: 2, margin: '0 6px' }} />
+          <div style={{ height: 3, width: 40, background: '#138808', borderRadius: 2 }} />
         </div>
       </div>
     </section>

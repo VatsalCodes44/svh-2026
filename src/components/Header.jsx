@@ -130,7 +130,7 @@ export default function Header() {
           gap: 12
         }}>
           <span style={{ fontSize: 16 }}>🚀</span>
-          <span>Registrations are now OPEN! Secure your spot before slots fill up.</span>
+          <span>Registrations extended till 25th July! Secure your spot before slots fill up.</span>
           <span style={{ fontSize: 16 }}>🚀</span>
         </div>
         {/* ── MAIN NAV ── */}
