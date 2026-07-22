@@ -401,13 +401,13 @@ export default function AdminDashboard() {
         { data: scoresData },
         { data: reqsData }
       ] = await Promise.all([
-        supabase.from('teams').select('*').order('created_at', { ascending: false }),
-        supabase.from('profiles').select('*'),
-        supabase.from('submissions').select('*').order('submitted_at', { ascending: false }),
-        supabase.from('evaluators').select('*').order('name', { ascending: true }),
-        supabase.from('evaluator_assignments').select('*'),
-        supabase.from('evaluations').select('*').order('created_at', { ascending: false }),
-        supabase.from('change_requests').select('*').order('created_at', { ascending: false })
+        supabase.from('teams').select('*').limit(5000).order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').limit(5000),
+        supabase.from('submissions').select('*').limit(5000).order('submitted_at', { ascending: false }),
+        supabase.from('evaluators').select('*').limit(5000).order('name', { ascending: true }),
+        supabase.from('evaluator_assignments').select('*').limit(5000),
+        supabase.from('evaluations').select('*').limit(5000).order('created_at', { ascending: false }),
+        supabase.from('change_requests').select('*').limit(5000).order('created_at', { ascending: false })
       ]);
 
       setTeams(teamsData || []);
