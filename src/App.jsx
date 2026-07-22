@@ -107,6 +107,7 @@ function App() {
             <Route path="/dashboard"          element={<Dashboard />} />
             <Route path="/leader-dashboard"   element={<LeaderDashboard />} />
             <Route path="/test-email"         element={<TestEmail />} />
+            {/* <Route path="/id-card" element={<IDCard />} /> */}
           </Routes>
         </main>
         <Footer />
