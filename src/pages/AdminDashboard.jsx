@@ -44,6 +44,337 @@ export default function AdminDashboard() {
   const [showAddEvalModal, setShowAddEvalModal] = useState(false);
   const [selectedEvaluator, setSelectedEvaluator] = useState(null);
 
+  // Data Export Tab state variables
+  const [exportType, setExportType] = useState('teams_members');
+  const [exportPsFilter, setExportPsFilter] = useState('ALL');
+  const [exportGenderFilter, setExportGenderFilter] = useState('ALL');
+  const [exportSearchQuery, setExportSearchQuery] = useState('');
+  const [selectedColumns, setSelectedColumns] = useState({});
+
+  // Email Broadcaster tab states
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [emailIsHtml, setEmailIsHtml] = useState(true);
+  const [emailPsFilter, setEmailPsFilter] = useState('ALL');
+  const [emailToOverride, setEmailToOverride] = useState('blockchainvitb@gmail.com');
+  
+  // BCC Target Checkboxes
+  const [bccTargetLeaders, setBccTargetLeaders] = useState(true);
+  const [bccTargetMembers, setBccTargetMembers] = useState(false);
+  const [bccTargetEvaluators, setBccTargetEvaluators] = useState(false);
+  const [manualBccEmails, setManualBccEmails] = useState('');
+
+  const [sendingEmails, setSendingEmails] = useState(false);
+  const [emailSendStatus, setEmailSendStatus] = useState(null); // { success: boolean, message: string }
+
+  // Computed BCC Recipients List
+  const computedBccRecipients = useMemo(() => {
+    let list = [];
+    let targetTeamIds = teams.map(t => t.id);
+    if (emailPsFilter !== 'ALL') {
+      const psSubs = submissions.filter(s => s.problem_code === emailPsFilter);
+      targetTeamIds = Array.from(new Set(psSubs.map(s => s.team_id)));
+    }
+
+    // 1. Team Leaders
+    if (bccTargetLeaders) {
+      const activeTeams = teams.filter(t => targetTeamIds.includes(t.id));
+      activeTeams.forEach(t => {
+        if (t.email && t.email.includes('@')) {
+          list.push(t.email.trim());
+        }
+      });
+    }
+
+    // 2. Group Members (Non-leaders)
+    if (bccTargetMembers) {
+      const targetProfiles = profiles.filter(p => targetTeamIds.includes(p.team_id) && !p.is_team_leader);
+      targetProfiles.forEach(p => {
+        if (p.email && p.email.includes('@')) {
+          list.push(p.email.trim());
+        }
+      });
+    }
+
+    // 3. Evaluators
+    if (bccTargetEvaluators) {
+      evaluators.forEach(e => {
+        if (e.email && e.email.includes('@')) {
+          list.push(e.email.trim());
+        }
+      });
+    }
+
+    // 4. Merge manual BCC emails
+    if (manualBccEmails.trim()) {
+      const parsed = manualBccEmails
+        .split(',')
+        .map(e => e.trim())
+        .filter(e => e && e.includes('@'));
+      list = [...list, ...parsed];
+    }
+
+    return Array.from(new Set(list));
+  }, [teams, profiles, evaluators, submissions, bccTargetLeaders, bccTargetMembers, bccTargetEvaluators, emailPsFilter, manualBccEmails]);
+
+  const handleBroadCastEmail = async (e) => {
+    e.preventDefault();
+    if (computedBccRecipients.length === 0) {
+      alert('BCC Recipients list is empty! Please select at least one group or add manual emails.');
+      return;
+    }
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      alert('Please fill in both the Subject and Email Body.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to broadcast this email to ${computedBccRecipients.length} recipients via BCC?`)) {
+      return;
+    }
+
+    setSendingEmails(true);
+    setEmailSendStatus(null);
+
+    try {
+      const res = await fetch('/api/bulkSendEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: emailSubject,
+          body: emailBody,
+          isHtml: emailIsHtml,
+          toEmail: emailToOverride,
+          bccRecipients: computedBccRecipients
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Error occurred while broadcasting emails.');
+      }
+
+      setEmailSendStatus({ success: true, message: `Successfully sent email broadcast to ${computedBccRecipients.length} recipients!` });
+      setEmailSubject('');
+      setEmailBody('');
+    } catch (err) {
+      console.error('Broadcast Error:', err);
+      setEmailSendStatus({ success: false, message: err.message || 'Failed to send broadcast.' });
+    } finally {
+      setSendingEmails(false);
+    }
+  };
+
+  const COLUMN_DEFINITIONS = useMemo(() => ({
+    teams_members: [
+      { id: 'team_id', label: 'Team ID', default: true },
+      { id: 'team_name', label: 'Team Name', default: true },
+      { id: 'leader_email', label: 'Leader Email', default: true },
+      { id: 'team_password', label: 'Team Password', default: false },
+      { id: 'member_name', label: 'Member Name', default: true },
+      { id: 'member_email', label: 'Member Email', default: true },
+      { id: 'member_phone', label: 'Member Phone', default: true },
+      { id: 'member_gender', label: 'Member Gender', default: true },
+      { id: 'member_reg_no', label: 'Member Reg No', default: true },
+      { id: 'is_leader', label: 'Is Leader', default: true },
+    ],
+    submissions: [
+      { id: 'idea_id', label: 'Idea ID', default: true },
+      { id: 'team_id', label: 'Team ID', default: true },
+      { id: 'team_name', label: 'Team Name', default: true },
+      { id: 'problem_code', label: 'PS Code', default: true },
+      { id: 'problem_statement', label: 'PS Title', default: true },
+      { id: 'theme', label: 'Theme', default: true },
+      { id: 'category', label: 'Category', default: true },
+      { id: 'idea_title', label: 'Idea Title', default: true },
+      { id: 'use_case', label: 'Use Case', default: false },
+      { id: 'target_audience', label: 'Target Audience', default: false },
+      { id: 'unique_idea', label: 'Unique Idea/Innovation', default: false },
+      { id: 'idea_description', label: 'Detailed Description', default: false },
+      { id: 'yt_link', label: 'YouTube Link', default: true },
+      { id: 'document_link', label: 'Drive Doc Link', default: true },
+      { id: 'ppt_url', label: 'PPT URL', default: true },
+      { id: 'submitted_at', label: 'Submitted At', default: true }
+    ],
+    evaluations: [
+      { id: 'eval_id', label: 'Evaluation ID', default: false },
+      { id: 'team_id', label: 'Team ID', default: true },
+      { id: 'team_name', label: 'Team Name', default: true },
+      { id: 'idea_id', label: 'Idea ID', default: true },
+      { id: 'problem_code', label: 'PS Code', default: true },
+      { id: 'evaluator_email', label: 'Evaluator Email', default: true },
+      { id: 'evaluator_name', label: 'Evaluator Name', default: true },
+      { id: 'alignment_score', label: 'Alignment Score', default: true },
+      { id: 'innovation_score', label: 'Innovation Score', default: true },
+      { id: 'feasibility_score', label: 'Feasibility Score', default: true },
+      { id: 'scalability_score', label: 'Scalability Score', default: true },
+      { id: 'compliance_score', label: 'Compliance Score', default: true },
+      { id: 'total_score', label: 'Total Score', default: true },
+      { id: 'comments', label: 'Comments / Remarks', default: true },
+      { id: 'created_at', label: 'Evaluation Date', default: true }
+    ],
+    evaluators: [
+      { id: 'evaluator_id', label: 'Evaluator ID', default: true },
+      { id: 'evaluator_name', label: 'Evaluator Name', default: true },
+      { id: 'evaluator_email', label: 'Evaluator Email', default: true },
+      { id: 'evaluator_password', label: 'Evaluator Password', default: true },
+      { id: 'created_at', label: 'Created At', default: true }
+    ]
+  }), []);
+
+  useEffect(() => {
+    const cols = COLUMN_DEFINITIONS[exportType] || [];
+    const initialMap = {};
+    cols.forEach(c => {
+      initialMap[c.id] = c.default;
+    });
+    setSelectedColumns(initialMap);
+  }, [exportType, COLUMN_DEFINITIONS]);
+
+  const handleExportCSV = () => {
+    const colsToExport = COLUMN_DEFINITIONS[exportType].filter(c => selectedColumns[c.id]);
+    if (colsToExport.length === 0) {
+      alert('Please select at least one column to export.');
+      return;
+    }
+
+    let rowsData = [];
+
+    if (exportType === 'teams_members') {
+      teams.forEach(t => {
+        const teamMembers = profiles.filter(p => p.team_id === t.id);
+
+        if (exportSearchQuery.trim()) {
+          const q = exportSearchQuery.toLowerCase();
+          const matchTeam = t.id.toLowerCase().includes(q) || t.team_name.toLowerCase().includes(q) || (t.email && t.email.toLowerCase().includes(q));
+          const hasMatchingMember = teamMembers.some(m => m.full_name.toLowerCase().includes(q) || (m.email && m.email.toLowerCase().includes(q)) || (m.registration_number && m.registration_number.toLowerCase().includes(q)));
+          if (!matchTeam && !hasMatchingMember) return;
+        }
+
+        const membersList = teamMembers.length > 0 ? teamMembers : [{
+          id: '', full_name: '-', email: '-', phone: '-', gender: '-', registration_number: '-', is_team_leader: false
+        }];
+
+        membersList.forEach(m => {
+          if (exportGenderFilter !== 'ALL' && m.gender !== exportGenderFilter) return;
+
+          const row = {};
+          if (selectedColumns['team_id']) row['team_id'] = t.id;
+          if (selectedColumns['team_name']) row['team_name'] = t.team_name;
+          if (selectedColumns['leader_email']) row['leader_email'] = t.email || '-';
+          if (selectedColumns['team_password']) row['team_password'] = t.password || '-';
+          if (selectedColumns['member_name']) row['member_name'] = m.full_name;
+          if (selectedColumns['member_email']) row['member_email'] = m.email || '-';
+          if (selectedColumns['member_phone']) row['member_phone'] = m.phone || '-';
+          if (selectedColumns['member_gender']) row['member_gender'] = m.gender || '-';
+          if (selectedColumns['member_reg_no']) row['member_reg_no'] = m.registration_number || '-';
+          if (selectedColumns['is_leader']) row['is_leader'] = m.is_team_leader ? 'Yes' : 'No';
+          rowsData.push(row);
+        });
+      });
+    } else if (exportType === 'submissions') {
+      submissions.forEach(sub => {
+        const teamObj = teams.find(t => t.id === sub.team_id) || {};
+
+        if (exportPsFilter !== 'ALL' && sub.problem_code !== exportPsFilter) return;
+
+        if (exportSearchQuery.trim()) {
+          const q = exportSearchQuery.toLowerCase();
+          const matchSub = sub.idea_id.toLowerCase().includes(q) || sub.problem_code.toLowerCase().includes(q) || sub.idea_title.toLowerCase().includes(q) || sub.problem_statement.toLowerCase().includes(q);
+          const matchTeam = (teamObj.team_name && teamObj.team_name.toLowerCase().includes(q)) || sub.team_id.toLowerCase().includes(q);
+          if (!matchSub && !matchTeam) return;
+        }
+
+        const row = {};
+        if (selectedColumns['idea_id']) row['idea_id'] = sub.idea_id;
+        if (selectedColumns['team_id']) row['team_id'] = sub.team_id;
+        if (selectedColumns['team_name']) row['team_name'] = teamObj.team_name || '-';
+        if (selectedColumns['problem_code']) row['problem_code'] = sub.problem_code;
+        if (selectedColumns['problem_statement']) row['problem_statement'] = sub.problem_statement;
+        if (selectedColumns['theme']) row['theme'] = sub.theme;
+        if (selectedColumns['category']) row['category'] = sub.category;
+        if (selectedColumns['idea_title']) row['idea_title'] = sub.idea_title;
+        if (selectedColumns['use_case']) row['use_case'] = sub.use_case;
+        if (selectedColumns['target_audience']) row['target_audience'] = sub.target_audience;
+        if (selectedColumns['unique_idea']) row['unique_idea'] = sub.unique_idea;
+        if (selectedColumns['idea_description']) row['idea_description'] = sub.idea_description;
+        if (selectedColumns['yt_link']) row['yt_link'] = sub.yt_link || '-';
+        if (selectedColumns['document_link']) row['document_link'] = sub.document_link || '-';
+        if (selectedColumns['ppt_url']) row['ppt_url'] = sub.ppt_url || '-';
+        if (selectedColumns['submitted_at']) row['submitted_at'] = new Date(sub.submitted_at).toLocaleString();
+        rowsData.push(row);
+      });
+    } else if (exportType === 'evaluations') {
+      evaluations.forEach(ev => {
+        const teamObj = teams.find(t => t.id === ev.team_id) || {};
+
+        if (exportPsFilter !== 'ALL' && ev.problem_code !== exportPsFilter) return;
+
+        if (exportSearchQuery.trim()) {
+          const q = exportSearchQuery.toLowerCase();
+          const matchEv = ev.idea_id.toLowerCase().includes(q) || ev.problem_code.toLowerCase().includes(q) || (ev.evaluator_name && ev.evaluator_name.toLowerCase().includes(q)) || ev.evaluator_email.toLowerCase().includes(q);
+          const matchTeam = (teamObj.team_name && teamObj.team_name.toLowerCase().includes(q)) || ev.team_id.toLowerCase().includes(q);
+          if (!matchEv && !matchTeam) return;
+        }
+
+        const row = {};
+        if (selectedColumns['eval_id']) row['eval_id'] = ev.id;
+        if (selectedColumns['team_id']) row['team_id'] = ev.team_id;
+        if (selectedColumns['team_name']) row['team_name'] = teamObj.team_name || ev.team_name || '-';
+        if (selectedColumns['idea_id']) row['idea_id'] = ev.idea_id;
+        if (selectedColumns['problem_code']) row['problem_code'] = ev.problem_code;
+        if (selectedColumns['evaluator_email']) row['evaluator_email'] = ev.evaluator_email;
+        if (selectedColumns['evaluator_name']) row['evaluator_name'] = ev.evaluator_name || '-';
+        if (selectedColumns['alignment_score']) row['alignment_score'] = ev.alignment_score;
+        if (selectedColumns['innovation_score']) row['innovation_score'] = ev.innovation_score;
+        if (selectedColumns['feasibility_score']) row['feasibility_score'] = ev.feasibility_score;
+        if (selectedColumns['scalability_score']) row['scalability_score'] = ev.scalability_score;
+        if (selectedColumns['compliance_score']) row['compliance_score'] = ev.compliance_score;
+        if (selectedColumns['total_score']) row['total_score'] = ev.total_score;
+        if (selectedColumns['comments']) row['comments'] = ev.comments || '-';
+        if (selectedColumns['created_at']) row['created_at'] = new Date(ev.created_at).toLocaleString();
+        rowsData.push(row);
+      });
+    } else if (exportType === 'evaluators') {
+      evaluators.forEach(ev => {
+        if (exportSearchQuery.trim()) {
+          const q = exportSearchQuery.toLowerCase();
+          if (!ev.name.toLowerCase().includes(q) && !ev.email.toLowerCase().includes(q)) return;
+        }
+
+        const row = {};
+        if (selectedColumns['evaluator_id']) row['evaluator_id'] = ev.id;
+        if (selectedColumns['evaluator_name']) row['evaluator_name'] = ev.name;
+        if (selectedColumns['evaluator_email']) row['evaluator_email'] = ev.email;
+        if (selectedColumns['evaluator_password']) row['evaluator_password'] = ev.password;
+        if (selectedColumns['created_at']) row['created_at'] = new Date(ev.created_at).toLocaleString();
+        rowsData.push(row);
+      });
+    }
+
+    if (rowsData.length === 0) {
+      alert('No data matches the selected filters.');
+      return;
+    }
+
+    const headers = colsToExport.map(c => `"${c.label.replace(/"/g, '""')}"`).join(',');
+    const body = rowsData.map(row => {
+      return colsToExport.map(c => {
+        const val = row[c.id] !== undefined ? String(row[c.id]) : '';
+        return `"${val.replace(/"/g, '""')}"`;
+      }).join(',');
+    }).join('\n');
+
+    const csvContent = `\uFEFF${headers}\n${body}`; // Add BOM for Excel UTF-8 support
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `svh_${exportType}_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     const sessionStr = localStorage.getItem('super_eval_session');
     if (!sessionStr) {
@@ -70,13 +401,13 @@ export default function AdminDashboard() {
         { data: scoresData },
         { data: reqsData }
       ] = await Promise.all([
-        supabase.from('teams').select('*').order('created_at', { ascending: false }),
-        supabase.from('profiles').select('*'),
-        supabase.from('submissions').select('*').order('submitted_at', { ascending: false }),
-        supabase.from('evaluators').select('*').order('name', { ascending: true }),
-        supabase.from('evaluator_assignments').select('*'),
-        supabase.from('evaluations').select('*').order('created_at', { ascending: false }),
-        supabase.from('change_requests').select('*').order('created_at', { ascending: false })
+        supabase.from('teams').select('*').limit(5000).order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').limit(5000),
+        supabase.from('submissions').select('*').limit(5000).order('submitted_at', { ascending: false }),
+        supabase.from('evaluators').select('*').limit(5000).order('name', { ascending: true }),
+        supabase.from('evaluator_assignments').select('*').limit(5000),
+        supabase.from('evaluations').select('*').limit(5000).order('created_at', { ascending: false }),
+        supabase.from('change_requests').select('*').limit(5000).order('created_at', { ascending: false })
       ]);
 
       setTeams(teamsData || []);
@@ -162,31 +493,39 @@ export default function AdminDashboard() {
 
       // 3. Update/Insert public.profiles table
       for (const m of membersToSave) {
-        if (m.id) {
-          await supabase
+        const profPayload = {
+          team_id: team.id,
+          full_name: m.full_name || 'Unnamed Member',
+          email: m.email || null,
+          phone: m.phone || null,
+          gender: m.gender || 'Female',
+          registration_number: m.registration_number || null,
+          is_team_leader: !!m.is_team_leader
+        };
+
+        const targetId = m.id || crypto.randomUUID();
+
+        // Check if profile exists in database
+        const { data: existingProf } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', targetId)
+          .maybeSingle();
+
+        if (existingProf) {
+          const { error: pErr } = await supabase
             .from('profiles')
-            .update({
-              full_name: m.full_name,
-              email: m.email,
-              phone: m.phone,
-              gender: m.gender,
-              registration_number: m.registration_number,
-              is_team_leader: !!m.is_team_leader
-            })
-            .eq('id', m.id);
+            .update(profPayload)
+            .eq('id', targetId);
+          if (pErr) throw pErr;
         } else {
-          await supabase
+          const { error: pErr } = await supabase
             .from('profiles')
             .insert([{
-              id: crypto.randomUUID(),
-              team_id: team.id,
-              full_name: m.full_name,
-              email: m.email,
-              phone: m.phone,
-              gender: m.gender || 'Female',
-              registration_number: m.registration_number,
-              is_team_leader: !!m.is_team_leader
+              id: targetId,
+              ...profPayload
             }]);
+          if (pErr) throw pErr;
         }
       }
 
@@ -423,21 +762,28 @@ export default function AdminDashboard() {
                 is_team_leader: !!m.is_team_leader
               };
 
-              if (m.id) {
+              const targetId = m.id || crypto.randomUUID();
+
+              // Check if profile exists in database
+              const { data: existingProf } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', targetId)
+                .maybeSingle();
+
+              if (existingProf) {
                 const { error: pErr } = await supabase
                   .from('profiles')
                   .update(profPayload)
-                  .eq('id', m.id);
-
+                  .eq('id', targetId);
                 if (pErr) throw pErr;
               } else {
                 const { error: pErr } = await supabase
                   .from('profiles')
                   .insert([{
-                    id: crypto.randomUUID(),
+                    id: targetId,
                     ...profPayload
                   }]);
-
                 if (pErr) throw pErr;
               }
             }
@@ -642,7 +988,9 @@ export default function AdminDashboard() {
             { id: 'teams', label: 'Teams & Members', count: teams.length },
             { id: 'evaluators', label: 'Evaluators & Assignments', count: evaluators.length },
             { id: 'leaderboard', label: 'PS Scores & Leaderboard', count: evaluations.length },
-            { id: 'changeRequests', label: 'Change Requests', count: overallStats.pendingChangeReqs, highlight: overallStats.pendingChangeReqs > 0 }
+            { id: 'changeRequests', label: 'Change Requests', count: overallStats.pendingChangeReqs, highlight: overallStats.pendingChangeReqs > 0 },
+            { id: 'export', label: 'Export Data Tools' },
+            { id: 'emailSender', label: 'Email Broadcaster' }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             return (
@@ -1250,6 +1598,393 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* TAB 6: DATA EXPORT TOOLS */}
+        {activeTab === 'export' && (
+          <div>
+            <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 800, color: '#fff', fontSize: 24, marginBottom: 6 }}>
+              Data Export & CSV Reports Generator
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 22 }}>
+              Configure, filter, and export live SVH 2026 data directly as Microsoft Excel-compatible CSV spreadsheets.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
+              {/* Step 1: Select Data Source */}
+              <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22 }}>
+                <h3 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 15, fontWeight: 700, margin: '0 0 14px' }}>
+                  Step 1: Select Data Source
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                  {[
+                    { id: 'teams_members', label: 'Teams & Member Profiles', desc: 'All registered teams, leader accounts, and group members.', icon: '👥' },
+                    { id: 'submissions', label: 'Idea Submissions', desc: 'Round 1 ideas, PS selections, YT links, and PPT attachments.', icon: '💡' },
+                    { id: 'evaluations', label: 'Evaluations & Scores', desc: 'Evaluator scorecards, alignment, scalability, and remarks.', icon: '📊' },
+                    { id: 'evaluators', label: 'Evaluator Accounts', desc: 'Evaluator system logins, credentials, and names.', icon: '👨‍🏫' },
+                  ].map(opt => {
+                    const isSelected = exportType === opt.id;
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => setExportType(opt.id)}
+                        style={{
+                          background: isSelected ? 'rgba(255,153,51,0.08)' : 'rgba(0,0,0,0.15)',
+                          border: isSelected ? '1.5px solid #FF9933' : '1.5px solid rgba(255,255,255,0.06)',
+                          borderRadius: 12, padding: '16px 14px', cursor: 'pointer',
+                          transition: 'all 0.2s ease', display: 'flex', gap: 12, alignItems: 'flex-start'
+                        }}
+                      >
+                        <span style={{ fontSize: 24 }}>{opt.icon}</span>
+                        <div>
+                          <div style={{ fontWeight: 700, color: isSelected ? '#FF9933' : '#fff', fontSize: 13, marginBottom: 4 }}>{opt.label}</div>
+                          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11.5, lineHeight: 1.4 }}>{opt.desc}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step 2: Columns & Filters Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+                {/* Columns Selection */}
+                <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                    <h3 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 15, fontWeight: 700, margin: 0 }}>
+                      Step 2: Choose Columns to Export
+                    </h3>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => {
+                          const updated = {};
+                          (COLUMN_DEFINITIONS[exportType] || []).forEach(c => updated[c.id] = true);
+                          setSelectedColumns(updated);
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: '#38bdf8', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Select All
+                      </button>
+                      <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11.5 }}>|</span>
+                      <button
+                        onClick={() => setSelectedColumns({})}
+                        style={{ background: 'transparent', border: 'none', color: '#ff6b6b', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {(COLUMN_DEFINITIONS[exportType] || []).map(col => (
+                      <label
+                        key={col.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '10px 12px', background: 'rgba(0,0,0,0.15)',
+                          borderRadius: 8, border: '1px solid rgba(255,255,255,0.03)',
+                          cursor: 'pointer', fontSize: 12, color: selectedColumns[col.id] ? '#fff' : 'rgba(255,255,255,0.55)'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!selectedColumns[col.id]}
+                          onChange={e => setSelectedColumns({ ...selectedColumns, [col.id]: e.target.checked })}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15, cursor: 'pointer' }}
+                        />
+                        <span>{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filters Selection */}
+                <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22 }}>
+                  <h3 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 15, fontWeight: 700, margin: '0 0 14px' }}>
+                    Step 3: Apply Filters & Search
+                  </h3>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4 }}>Search Filter</label>
+                      <input
+                        type="text"
+                        placeholder="Search IDs, names, emails..."
+                        value={exportSearchQuery}
+                        onChange={e => setExportSearchQuery(e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }}
+                      />
+                    </div>
+
+                    {(exportType === 'submissions' || exportType === 'evaluations') && (
+                      <div>
+                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4 }}>Problem Statement Filter</label>
+                        <select
+                          value={exportPsFilter}
+                          onChange={e => setExportPsFilter(e.target.value)}
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12 }}
+                        >
+                          <option value="ALL">All Problem Statements</option>
+                          {STATEMENTS.map(s => (
+                            <option key={s.id} value={s.id} style={{ color: '#000' }}>{s.id} - {s.title.substring(0, 40)}...</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {exportType === 'teams_members' && (
+                      <div>
+                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4 }}>Gender Filter (Members)</label>
+                        <select
+                          value={exportGenderFilter}
+                          onChange={e => setExportGenderFilter(e.target.value)}
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12 }}
+                        >
+                          <option value="ALL">All Genders</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={handleExportCSV}
+                      style={{
+                        background: 'linear-gradient(135deg, #FF9933 0%, #e07800 100%)',
+                        color: '#000', border: 'none', padding: '11px 24px', borderRadius: 8,
+                        fontWeight: 800, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+                        boxShadow: '0 4px 14px rgba(255,153,51,0.3)', transition: 'transform 0.2s'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                    >
+                      📥 Download Excel / CSV File
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: EMAIL BROADCASTER */}
+        {activeTab === 'emailSender' && (
+          <div>
+            <h1 style={{ fontFamily: 'Montserrat,sans-serif', fontWeight: 800, color: '#fff', fontSize: 24, marginBottom: 6 }}>
+              Email Broadcaster Portal 📬
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 22 }}>
+              Compose and dispatch custom plain text or HTML formatted emails to specific participant filters, coordinators, or evaluators.
+            </p>
+
+            {emailSendStatus && (
+              <div style={{
+                background: emailSendStatus.success ? 'rgba(74,222,128,0.12)' : 'rgba(239,68,68,0.12)',
+                border: emailSendStatus.success ? '1px solid rgba(74,222,128,0.3)' : '1px solid rgba(239,68,68,0.3)',
+                color: emailSendStatus.success ? '#4ade80' : '#ef4444',
+                padding: '14px 18px', borderRadius: 10, fontSize: 13, marginBottom: 22,
+                display: 'flex', alignItems: 'center', gap: 10
+              }}>
+                <span>{emailSendStatus.success ? '✅' : '⚠️'}</span>
+                <span>{emailSendStatus.message}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleBroadCastEmail} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'flex-start' }}>
+              {/* Left Column: Email Composer */}
+              <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <h3 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 15, fontWeight: 700, margin: 0 }}>
+                  Email Template Composer
+                </h3>
+
+                <div>
+                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
+                    Send To (Primary Visible Recipient) *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. blockchainvitb@gmail.com"
+                    value={emailToOverride}
+                    onChange={e => setEmailToOverride(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 13, boxSizing: 'border-box', outline: 'none' }}
+                  />
+                  <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 4 }}>
+                    👥 All other selected groups and manual emails will be BCC'd privately.
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
+                    Subject Line *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter email subject..."
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 13, boxSizing: 'border-box', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}>
+                      Message Content (Body) *
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#FF9933', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={emailIsHtml}
+                        onChange={e => setEmailIsHtml(e.target.checked)}
+                        style={{ accentColor: '#FF9933', width: 14, height: 14 }}
+                      />
+                      <span>Format body as HTML Code</span>
+                    </label>
+                  </div>
+                  <textarea
+                    required
+                    rows="14"
+                    placeholder={emailIsHtml ? "<html>\n  <body>\n    <h2>Hello Innovators!</h2>\n    <p>We are glad to announce...</p>\n  </body>\n</html>" : "Write your email message body here..."}
+                    value={emailBody}
+                    onChange={e => setEmailBody(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12.5, fontFamily: emailIsHtml ? 'Courier New, monospace' : 'Poppins, sans-serif', boxSizing: 'border-box', outline: 'none', resize: 'vertical', lineHeight: 1.5 }}
+                  />
+                  <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 4 }}>
+                    💡 {emailIsHtml ? 'HTML Mode: Paste full HTML tags, links (<a href="...">), and CSS colors. They will parse and render natively in standard mail boxes.' : 'Plain Text Mode: Raw text content only (no formatting tags).'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Audience Routing & Preview */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* Routing & Filters Card */}
+                <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <h3 style={{ color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 15, fontWeight: 700, margin: 0 }}>
+                    Audience Routing & Constraints
+                  </h3>
+
+                  {/* Filter by Problem Statement */}
+                  <div>
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4 }}>
+                      Limit by Problem Statement (PS) Selection
+                    </label>
+                    <select
+                      value={emailPsFilter}
+                      onChange={e => setEmailPsFilter(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12.5 }}
+                    >
+                      <option value="ALL">All Registered Teams (No PS Filter)</option>
+                      {STATEMENTS.map(s => (
+                        <option key={s.id} value={s.id} style={{ color: '#000' }}>{s.id} - {s.title.substring(0, 42)}...</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* BCC Targets Checkboxes */}
+                  <div>
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 6, fontWeight: 600 }}>
+                      BCC Target Groups (Select Multiple)
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={bccTargetLeaders}
+                          onChange={e => setBccTargetLeaders(e.target.checked)}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15 }}
+                        />
+                        <span>Team Leaders</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={bccTargetMembers}
+                          onChange={e => setBccTargetMembers(e.target.checked)}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15 }}
+                        />
+                        <span>Group Members (Non-Leaders)</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={bccTargetEvaluators}
+                          onChange={e => setBccTargetEvaluators(e.target.checked)}
+                          style={{ accentColor: '#FF9933', width: 15, height: 15 }}
+                        />
+                        <span>All Evaluators</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Manual BCC Inputs */}
+                  <div>
+                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 11.5, marginBottom: 4, fontWeight: 600 }}>
+                      Additional / Manual BCC Emails
+                    </label>
+                    <textarea
+                      rows="3"
+                      placeholder="Enter emails separated by commas (e.g. test@gmail.com, admin@vitbhopal.ac.in)..."
+                      value={manualBccEmails}
+                      onChange={e => setManualBccEmails(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 12, boxSizing: 'border-box', resize: 'vertical' }}
+                    />
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10.5, marginTop: 4 }}>
+                      🔒 BCC hides recipient addresses from each other for privacy.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audience Preview Card */}
+                <div style={{ background: '#0a1d33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, color: '#4ade80', fontSize: 13, fontFamily: 'Montserrat,sans-serif' }}>
+                      BCC Recipients List ({computedBccRecipients.length})
+                    </h4>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Ready to Dispatch</span>
+                  </div>
+
+                  <div style={{
+                    maxHeight: 140, overflowY: 'auto', background: 'rgba(0,0,0,0.25)',
+                    border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: 10,
+                    fontFamily: 'Courier New, monospace', fontSize: 11, color: 'rgba(255,255,255,0.7)',
+                    display: 'flex', flexWrap: 'wrap', gap: 6
+                  }}>
+                    {computedBccRecipients.length === 0 ? (
+                      <span style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.35)' }}>No target recipients selected or entered.</span>
+                    ) : (
+                      computedBccRecipients.map((mail, idx) => (
+                        <span key={idx} style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 4, padding: '2px 5px', color: '#4ade80' }}>
+                          {mail}
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="submit"
+                      disabled={sendingEmails || computedBccRecipients.length === 0}
+                      style={{
+                        background: 'linear-gradient(135deg, #4ade80 0%, #16a34a 100%)',
+                        color: '#000', border: 'none', padding: '12px 28px', borderRadius: 8,
+                        fontWeight: 800, cursor: (sendingEmails || computedBccRecipients.length === 0) ? 'not-allowed' : 'pointer',
+                        fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+                        opacity: (sendingEmails || computedBccRecipients.length === 0) ? 0.6 : 1,
+                        boxShadow: '0 4px 14px rgba(74,222,128,0.25)', transition: 'all 0.2s'
+                      }}
+                    >
+                      {sendingEmails ? '⚡ Dispatching Emails...' : '🚀 Broadcast Emails'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
       </main>
 
       {/* --- MODAL 1: VIEW TEAM POPUP (TEAM ACCOUNT + ALL MEMBERS) --- */}
@@ -1360,6 +2095,7 @@ export default function AdminDashboard() {
                 type="button"
                 onClick={() => {
                   const newMember = {
+                    id: crypto.randomUUID(),
                     full_name: '',
                     email: '',
                     phone: '',
@@ -1519,39 +2255,39 @@ export default function AdminDashboard() {
         </div>
       )}
 
-        {/* --- MODAL 4: CREATE EVALUATOR MODAL --- */}
-        {showAddEvalModal && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-            <form onSubmit={handleAddEvaluator} style={{ background: '#0a1d33', border: '1px solid rgba(255,153,51,0.3)', padding: 24, borderRadius: 16, width: '100%', maxWidth: 440, color: '#fff', fontSize: 12.5 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 style={{ margin: 0, color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 16, fontWeight: 800 }}>Create Evaluator Account</h3>
-                <button type="button" onClick={() => setShowAddEvalModal(false)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}>✕</button>
-              </div>
+      {/* --- MODAL 4: CREATE EVALUATOR MODAL --- */}
+      {showAddEvalModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <form onSubmit={handleAddEvaluator} style={{ background: '#0a1d33', border: '1px solid rgba(255,153,51,0.3)', padding: 24, borderRadius: 16, width: '100%', maxWidth: 440, color: '#fff', fontSize: 12.5 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, color: '#FF9933', fontFamily: 'Montserrat,sans-serif', fontSize: 16, fontWeight: 800 }}>Create Evaluator Account</h3>
+              <button type="button" onClick={() => setShowAddEvalModal(false)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 4, color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Full Name</label>
-                  <input type="text" required value={newEvalData.name} onChange={e => setNewEvalData({ ...newEvalData, name: e.target.value })} placeholder="Dr. John Doe" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 4, color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Email Address</label>
-                  <input type="email" required value={newEvalData.email} onChange={e => setNewEvalData({ ...newEvalData, email: e.target.value })} placeholder="evaluator@vitbhopal.ac.in" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 4, color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Login Password</label>
-                  <input type="text" required value={newEvalData.password} onChange={e => setNewEvalData({ ...newEvalData, password: e.target.value })} placeholder="svh2026@evaluator_name" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }} />
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Full Name</label>
+                <input type="text" required value={newEvalData.name} onChange={e => setNewEvalData({ ...newEvalData, name: e.target.value })} placeholder="Dr. John Doe" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }} />
               </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Email Address</label>
+                <input type="email" required value={newEvalData.email} onChange={e => setNewEvalData({ ...newEvalData, email: e.target.value })} placeholder="evaluator@vitbhopal.ac.in" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Login Password</label>
+                <input type="text" required value={newEvalData.password} onChange={e => setNewEvalData({ ...newEvalData, password: e.target.value })} placeholder="svh2026@evaluator_name" style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 12, boxSizing: 'border-box' }} />
+              </div>
+            </div>
 
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowAddEvalModal(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Cancel</button>
-                <button disabled={actionLoading} type="submit" style={{ background: '#FF9933', border: 'none', color: '#000', padding: '8px 20px', borderRadius: 6, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
-                  Create Evaluator
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setShowAddEvalModal(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+              <button disabled={actionLoading} type="submit" style={{ background: '#FF9933', border: 'none', color: '#000', padding: '8px 20px', borderRadius: 6, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
+                Create Evaluator
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </section>
   );
 }

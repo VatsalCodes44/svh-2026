@@ -56,6 +56,10 @@ function apiDevServerPlugin() {
               const { default: handler } = await import('./api/sendEmail.js');
               await handler(req, res);
               return;
+            } else if (apiName === 'bulkSendEmail') {
+              const { default: handler } = await import('./api/bulkSendEmail.js');
+              await handler(req, res);
+              return;
             }
           } catch (err) {
             console.error(`[API Dev Error] ${req.url}:`, err);
